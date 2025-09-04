@@ -1,4 +1,3 @@
-
 <template>
   <div class="dashboard-container">
     <!-- Header Section -->
@@ -173,7 +172,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
-import { useCustomerStore } from '@/stores/customerStore'
+import { useDashboardStore } from '@/stores/dashboardStore'
 import Chart from 'primevue/chart'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -187,7 +186,7 @@ import CustomerForm from '@/components/CustomerForm.vue'
 // Composables
 const { t } = useI18n()
 const toast = useToast()
-const customerStore = useCustomerStore()
+const dashboardStore = useDashboardStore()
 
 // Reactive Data
 const exportLoading = ref(false)
@@ -206,13 +205,13 @@ const chartPeriods = [
 ]
 
 // Computed Properties
-const totalCustomers = computed(() => customerStore.customers.length)
+const totalCustomers = computed(() => dashboardStore.customers.length)
 const totalOrders = computed(() => 
-  customerStore.customers.reduce((sum, customer) => sum + customer.totalOrders, 0)
+  dashboardStore.customers.reduce((sum, customer) => sum + customer.totalOrders, 0)
 )
 const totalRevenue = computed(() => totalOrders.value * 100) // Placeholder: $100 per order
 const newCustomersThisMonth = computed(() => 
-  customerStore.customers.filter(c => {
+  dashboardStore.customers.filter(c => {
     const date = new Date(c.lastOrderDate || Date.now())
     return date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear()
   }).length
@@ -299,8 +298,7 @@ const exportReport = async () => {
 }
 
 const openCustomerDialog = () => {
-  // selectedCustomer.value = null
-  selectedCustomer.value = {}
+  selectedCustomer.value = null
   formMode.value = 'add'
   showCustomerDialog.value = true
 }
@@ -309,7 +307,7 @@ const saveCustomer = async (customer) => {
   saveLoading.value = true
   try {
     if (formMode.value === 'add') {
-      await customerStore.addCustomer(customer)
+      await dashboardStore.addCustomer(customer)
       toast.add({
         severity: 'success',
         summary: t('success'),
@@ -317,7 +315,7 @@ const saveCustomer = async (customer) => {
         life: 3000
       })
     } else {
-      await customerStore.updateCustomer(customer)
+      await dashboardStore.updateCustomer(customer)
       toast.add({
         severity: 'success',
         summary: t('success'),
@@ -360,7 +358,7 @@ const viewAllActivities = () => {
 // Lifecycle
 onMounted(async () => {
   try {
-    await customerStore.fetchCustomers()
+    await dashboardStore.fetchCustomers()
   } catch (error) {
     toast.add({
       severity: 'error',

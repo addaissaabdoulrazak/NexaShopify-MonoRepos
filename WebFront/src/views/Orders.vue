@@ -521,7 +521,8 @@ const onPageChange = (event) => {
 }
 
 const openOrderDialog = () => {
-  selectedOrder.value = null
+  // selectedOrder.value = null
+  selectedOrder.value = {}
   formMode.value = 'add'
   showOrderDialog.value = true
 }
@@ -898,6 +899,13 @@ watch(filters, () => {
   align-items: center;
   padding-top: 1rem;
   border-top: 1px solid #e5e7eb;
+}
+
+/* align input fiel on the same line than other input */
+.filters-row .p-input-icon-left {
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .results-chip {

@@ -553,7 +553,8 @@ const onPageChange = (event) => {
 }
 
 const openCustomerDialog = () => {
-  selectedCustomer.value = null
+  // selectedCustomer.value = null
+  selectedCustomer.value = {}
   formMode.value = 'add'
   showCustomerDialog.value = true
 }
@@ -948,6 +949,13 @@ watch(filters, () => {
   align-items: center;
   padding-top: 1rem;
   border-top: 1px solid #e5e7eb;
+}
+
+/* align input fiel on the same line than other input */
+.filters-row .p-input-icon-left {
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .results-chip {

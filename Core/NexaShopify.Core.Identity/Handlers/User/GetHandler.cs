@@ -34,7 +34,7 @@ namespace NexaShopify.Core.Identity.Handlers.User
             _securityKey = new SymmetricSecurityKey(base64String);  
         }
 
-            #region>> Test - chopp rice
+            #region>> Test - Abdoul Razak "Adda Issa"
             public static void InitializeExtension(IConfiguration configuration)
             {
 

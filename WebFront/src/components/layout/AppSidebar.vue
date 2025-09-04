@@ -212,7 +212,7 @@ export default {
     const mainMenuItems = [
       { 
         name: 'Dashboard', 
-        path: '/', 
+        path: '/seller-dashboard', 
         label: 'Tableau de bord', 
         icon: 'pi pi-home'
       },

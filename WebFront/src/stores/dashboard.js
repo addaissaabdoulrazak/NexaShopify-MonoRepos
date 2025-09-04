@@ -51,7 +51,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   ]);
 
   const currentUser = ref({
-    name: 'Abdoul...',
+    name: 'Abdoul Razak...',
     email: 'abdoul.hamid@example.com',
     avatar: 'AH',
     role: 'Admin'

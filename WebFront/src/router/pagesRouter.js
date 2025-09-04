@@ -97,9 +97,27 @@ router.beforeEach((to) => {
 });
 
 // Gestion du spinner - version corrigée
+// router.beforeEach((to, from, next) => {
+
+//   console.log(`Navigating from ${from.path} to ${to.path} at ${new Date().toLocaleString('fr-FR', { timeZone: 'CET' })}`);
+//   const spinner = document.getElementById('nb-global-spinner');
+//   if (spinner) {
+//     spinner.style.display = 'flex';
+//     spinner.style.opacity = '1';
+//   }
+//   next();
+// });
+
+// Gestion du spinner - version corrigée
 router.beforeEach((to, from, next) => {
 
   console.log(`Navigating from ${from.path} to ${to.path} at ${new Date().toLocaleString('fr-FR', { timeZone: 'CET' })}`);
+  
+  // Ne pas afficher le spinner pour certaines routes
+  if (to.meta.layout === 'layoutseller') {
+    return next(); // continuer sans spinner
+  }
+
   const spinner = document.getElementById('nb-global-spinner');
   if (spinner) {
     spinner.style.display = 'flex';
@@ -135,5 +153,7 @@ router.onError((error) => {
   if (spinner) spinner.style.display = 'none';
   console.error("Erreur de navigation :", error);
 });
+
+
 
 export default router;

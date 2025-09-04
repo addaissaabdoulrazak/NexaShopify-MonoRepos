@@ -1,627 +1,778 @@
 <template>
-  <div class="dashboard-container">
-    <!-- Header Section -->
-    <div class="page-header">
+  <div class="customer-form-container">
+    <!-- Form Header -->
+    <div class="form-header">
       <div class="header-content">
-        <div class="title-section">
-          <h1 class="page-title">{{ $t('dashboard') }}</h1>
-          <p class="page-subtitle">{{ $t('overviewOfYourBusiness') }}</p>
+        <div class="header-info">
+          <h2 class="form-title">
+            {{ formMode === 'add' ? $t('addNewCustomer') : $t('editCustomer') }}
+          </h2>
+          <p class="form-subtitle">
+            {{ formMode === 'add' ? $t('createNewCustomerDescription') : $t('updateCustomerDescription') }}
+          </p>
         </div>
         <div class="header-actions">
           <Button 
-            :label="$t('exportReport')" 
-            icon="pi pi-download" 
+            :label="$t('preview')" 
+            icon="pi pi-eye" 
             severity="secondary" 
             outlined 
-            class="action-btn"
-            @click="exportReport"
-            :loading="exportLoading"
+            @click="previewCustomer"
+            :disabled="!customer.name"
           />
           <Button 
-            :label="$t('addCustomer')" 
-            icon="pi pi-plus" 
-            class="primary-btn"
-            @click="openCustomerDialog"
+            :label="$t('saveAsPending')" 
+            icon="pi pi-save" 
+            severity="secondary" 
+            outlined 
+            @click="saveAsPending"
+            :loading="pendingLoading"
           />
         </div>
       </div>
-    </div>
-
-    <!-- Key Metrics Section -->
-    <div class="metrics-grid">
-      <Card class="metric-card">
-        <template #content>
-          <div class="metric-content">
-            <i class="pi pi-users metric-icon"></i>
-            <div class="metric-info">
-              <span class="metric-value">{{ formatNumber(totalCustomers) }}</span>
-              <span class="metric-label">{{ $t('totalCustomers') }}</span>
-            </div>
-          </div>
-        </template>
-      </Card>
-      <Card class="metric-card">
-        <template #content>
-          <div class="metric-content">
-            <i class="pi pi-shopping-cart metric-icon"></i>
-            <div class="metric-info">
-              <span class="metric-value">{{ formatNumber(totalOrders) }}</span>
-              <span class="metric-label">{{ $t('totalOrders') }}</span>
-            </div>
-          </div>
-        </template>
-      </Card>
-      <Card class="metric-card">
-        <template #content>
-          <div class="metric-content">
-            <i class="pi pi-chart-line metric-icon"></i>
-            <div class="metric-info">
-              <span class="metric-value">{{ formatCurrency(totalRevenue) }}</span>
-              <span class="metric-label">{{ $t('totalRevenue') }}</span>
-            </div>
-          </div>
-        </template>
-      </Card>
-      <Card class="metric-card">
-        <template #content>
-          <div class="metric-content">
-            <i class="pi pi-user-plus metric-icon"></i>
-            <div class="metric-info">
-              <span class="metric-value">{{ formatNumber(newCustomersThisMonth) }}</span>
-              <span class="metric-label">{{ $t('newCustomersThisMonth') }}</span>
-            </div>
-          </div>
-        </template>
-      </Card>
-    </div>
-
-    <!-- Charts Section -->
-    <div class="charts-grid">
-      <Card class="chart-card">
-        <template #header>
-          <div class="chart-header">
-            <h3 class="chart-title">{{ $t('customerGrowth') }}</h3>
-            <Dropdown 
-              v-model="customerChartPeriod" 
-              :options="chartPeriods" 
-              optionLabel="label" 
-              optionValue="value" 
-              class="chart-filter"
-            />
-          </div>
-        </template>
-        <template #content>
-          <Chart type="line" :data="customerChartData" :options="chartOptions" class="chart" />
-        </template>
-      </Card>
-      <Card class="chart-card">
-        <template #header>
-          <div class="chart-header">
-            <h3 class="chart-title">{{ $t('orderTrends') }}</h3>
-            <Dropdown 
-              v-model="orderChartPeriod" 
-              :options="chartPeriods" 
-              optionLabel="label" 
-              optionValue="value" 
-              class="chart-filter"
-            />
-          </div>
-        </template>
-        <template #content>
-          <Chart type="bar" :data="orderChartData" :options="chartOptions" class="chart" />
-        </template>
-      </Card>
-    </div>
-
-    <!-- Recent Activity Section -->
-    <Card class="activity-card">
-      <template #header>
-        <div class="activity-header">
-          <h3 class="activity-title">{{ $t('recentActivity') }}</h3>
-          <Button 
-            :label="$t('viewAll')" 
-            text 
-            @click="viewAllActivities"
-            class="view-all-btn"
-          />
+      <!-- Progress Indicator -->
+      <div class="form-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: `${formProgress}%` }"></div>
         </div>
-      </template>
-      <template #content>
-        <DataTable :value="recentActivities" class="activity-table" responsiveLayout="scroll">
-          <Column field="date" :header="$t('date')" sortable>
-            <template #body="{ data }">
-              {{ formatDate(data.date) }}
-            </template>
-          </Column>
-          <Column field="customer" :header="$t('customer')" sortable />
-          <Column field="action" :header="$t('action')" />
-          <Column field="details" :header="$t('details')" />
-        </DataTable>
-        <div v-if="!recentActivities.length" class="empty-state">
-          <i class="pi pi-info-circle empty-icon"></i>
-          <p class="empty-message">{{ $t('noRecentActivity') }}</p>
-        </div>
-      </template>
-    </Card>
+        <span class="progress-text">{{ Math.round(formProgress) }}% {{ $t('complete') }}</span>
+      </div>
+    </div>
 
-    <!-- Customer Form Dialog -->
+    <!-- Main Form Content -->
+    <div class="form-content">
+      <TabView v-model:activeIndex="activeTab" class="customer-tabs" @tab-change="onTabChange">
+        <!-- Basic Information Tab -->
+        <TabPanel :header="$t('basicInfo')" class="tab-panel">
+          <div class="tab-content">
+            <div class="section-header">
+              <h3 class="section-title">{{ $t('customerDetails') }}</h3>
+              <p class="section-description">{{ $t('basicCustomerInformation') }}</p>
+            </div>
+            
+            <div class="form-grid">
+              <!-- Customer Name -->
+              <div class="form-field full-width" :class="{ 'field-error': v$.name.$error }">
+                <label for="name" class="field-label required">
+                  {{ $t('customerName') }}
+                  <Tooltip target=".name-help" :value="$t('nameTooltip')" position="top" />
+                  <i class="pi pi-question-circle name-help help-icon"></i>
+                </label>
+                <InputText
+                  id="name"
+                  v-model="localCustomer.name"
+                  :class="{ 'p-invalid': v$.name.$error }"
+                  :placeholder="$t('enterCustomerName')"
+                  @blur="v$.name.$touch"
+                  @input="updateProgress"
+                  maxlength="100"
+                  class="field-input"
+                />
+                <div class="field-footer">
+                  <small v-if="v$.name.$error" class="error-message">
+                    {{ v$.name.$errors[0].$message }}
+                  </small>
+                  <small class="char-counter">
+                    {{ localCustomer.name?.length || 0 }}/100
+                  </small>
+                </div>
+              </div>
+
+              <!-- Email -->
+              <div class="form-field" :class="{ 'field-error': v$.email.$error }">
+                <label for="email" class="field-label required">
+                  {{ $t('email') }}
+                  <Tooltip target=".email-help" :value="$t('emailTooltip')" position="top" />
+                  <i class="pi pi-question-circle email-help help-icon"></i>
+                </label>
+                <InputText
+                  id="email"
+                  v-model="localCustomer.email"
+                  :class="{ 'p-invalid': v$.email.$error }"
+                  :placeholder="$t('enterEmail')"
+                  @blur="v$.email.$touch"
+                  @input="updateProgress"
+                  class="field-input"
+                />
+                <small v-if="v$.email.$error" class="error-message">
+                  {{ v$.email.$errors[0].$message }}
+                </small>
+              </div>
+
+              <!-- Phone -->
+              <div class="form-field">
+                <label for="phone" class="field-label">
+                  {{ $t('phone') }}
+                  <span class="optional-label">{{ $t('optional') }}</span>
+                </label>
+                <InputText
+                  id="phone"
+                  v-model="localCustomer.phone"
+                  :placeholder="$t('enterPhone')"
+                  @input="updateProgress"
+                  class="field-input"
+                />
+              </div>
+
+              <!-- Status -->
+              <div class="form-field">
+                <label for="status" class="field-label required">{{ $t('status') }}</label>
+                <Dropdown
+                  id="status"
+                  v-model="localCustomer.status"
+                  :options="statusOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="$t('selectStatus')"
+                  class="field-input"
+                  @change="updateProgress"
+                />
+              </div>
+
+              <!-- Country -->
+              <div class="form-field">
+                <label for="country" class="field-label required">{{ $t('country') }}</label>
+                <Dropdown
+                  id="country"
+                  v-model="localCustomer.country"
+                  :options="countryOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  :placeholder="$t('selectCountry')"
+                  class="field-input"
+                  @change="updateProgress"
+                />
+              </div>
+
+              <!-- Address -->
+              <div class="form-field full-width">
+                <label for="address" class="field-label">
+                  {{ $t('address') }}
+                  <span class="optional-label">{{ $t('optional') }}</span>
+                </label>
+                <Textarea
+                  id="address"
+                  v-model="localCustomer.address"
+                  :placeholder="$t('enterAddress')"
+                  rows="3"
+                  class="field-input"
+                  @input="updateProgress"
+                />
+              </div>
+            </div>
+          </div>
+        </TabPanel>
+
+        <!-- Purchase History Tab -->
+        <TabPanel :header="$t('purchaseHistory')" class="tab-panel">
+          <div class="tab-content">
+            <div class="section-header">
+              <h3 class="section-title">{{ $t('purchaseHistory') }}</h3>
+              <p class="section-description">{{ $t('viewCustomerPurchases') }}</p>
+            </div>
+
+            <div class="form-grid">
+              <!-- Total Orders -->
+              <div class="form-field">
+                <label for="orders" class="field-label">{{ $t('totalOrders') }}</label>
+                <InputNumber
+                  id="orders"
+                  v-model="localCustomer.orders"
+                  :placeholder="$t('enterOrders')"
+                  :min="0"
+                  class="field-input"
+                  @input="updateProgress"
+                />
+              </div>
+
+              <!-- Total Spent -->
+              <div class="form-field">
+                <label for="totalSpent" class="field-label">{{ $t('totalSpent') }}</label>
+                <div class="input-group">
+                  <span class="input-addon">TND</span>
+                  <InputNumber
+                    id="totalSpent"
+                    v-model="localCustomer.totalSpent"
+                    :placeholder="$t('enterTotalSpent')"
+                    :min="0"
+                    :maxFractionDigits="3"
+                    class="field-input"
+                    @input="updateProgress"
+                  />
+                </div>
+              </div>
+
+              <!-- Recent Orders -->
+              <div class="form-field full-width">
+                <label class="field-label">{{ $t('recentOrders') }}</label>
+                <DataTable
+                  :value="localCustomer.recentOrders"
+                  responsiveLayout="scroll"
+                  class="orders-table"
+                >
+                  <Column field="orderId" :header="$t('orderId')" style="width: 20%"></Column>
+                  <Column field="date" :header="$t('date')" style="width: 30%"></Column>
+                  <Column field="amount" :header="$t('amount')" style="width: 30%">
+                    <template #body="{ data }">
+                      {{ formatCurrency(data.amount) }}
+                    </template>
+                  </Column>
+                  <Column field="status" :header="$t('status')" style="width: 20%">
+                    <template #body="{ data }">
+                      <Tag :value="data.status" :severity="getOrderStatusSeverity(data.status)" />
+                    </template>
+                  </Column>
+                </DataTable>
+                <div v-if="!localCustomer.recentOrders || localCustomer.recentOrders.length === 0" class="empty-orders">
+                  <p class="empty-text">{{ $t('noOrdersYet') }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabPanel>
+
+        <!-- Tags Tab -->
+        <TabPanel :header="$t('tags')" class="tab-panel">
+          <div class="tab-content">
+            <div class="section-header">
+              <h3 class="section-title">{{ $t('customerTags') }}</h3>
+              <p class="section-description">{{ $t('organizeCustomersWithTags') }}</p>
+            </div>
+
+            <div class="form-grid">
+              <!-- Tags -->
+              <div class="form-field full-width">
+                <label for="tags" class="field-label">{{ $t('tags') }}</label>
+                <Chips
+                  id="tags"
+                  v-model="localCustomer.tags"
+                  :placeholder="$t('addTags')"
+                  class="field-input"
+                  separator=","
+                  @input="updateProgress"
+                />
+                <small class="field-help">{{ $t('tagsHelp') }}</small>
+              </div>
+            </div>
+          </div>
+        </TabPanel>
+      </TabView>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <div class="actions-left">
+        <Button 
+          :label="$t('cancel')" 
+          icon="pi pi-times" 
+          severity="secondary"
+          outlined 
+          @click="handleCancel"
+        />
+      </div>
+      <div class="actions-right">
+        <Button 
+          :label="$t('saveAndAddAnother')" 
+          icon="pi pi-plus" 
+          severity="secondary"
+          outlined 
+          @click="saveAndAddAnother"
+          :loading="saveAndAddLoading"
+        />
+        <Button 
+          :label="$t('save')" 
+          icon="pi pi-check" 
+          @click="validateAndSave"
+          :loading="saveLoading"
+          class="save-button"
+        />
+      </div>
+    </div>
+
+    <!-- Unsaved Changes Dialog -->
     <Dialog 
-      v-model:visible="showCustomerDialog" 
-      :header="dialogTitle"
-      :style="{ width: '90vw', maxWidth: '800px' }" 
-      :maximizable="true" 
+      v-model:visible="showUnsavedDialog" 
+      :header="$t('unsavedChanges')"
       :modal="true"
-      class="customer-dialog"
-      @hide="onDialogHide"
+      :closable="false"
+      style="width: 400px"
     >
-      <CustomerForm 
-        :customer="selectedCustomer" 
-        :mode="formMode"
-        :loading="saveLoading"
-        @save="saveCustomer" 
-        @cancel="closeCustomerDialog"
-      />
+      <p>{{ $t('unsavedChangesMessage') }}</p>
+      <template #footer>
+        <Button 
+          :label="$t('discard')" 
+          icon="pi pi-times" 
+          severity="secondary"
+          outlined 
+          @click="discardChanges"
+        />
+        <Button 
+          :label="$t('saveChanges')" 
+          icon="pi pi-check" 
+          @click="saveBeforeLeave"
+          autofocus
+        />
+      </template>
     </Dialog>
-
-    <!-- Toast Messages -->
-    <Toast />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'primevue/usetoast'
-import { useCustomerStore } from '@/stores/customerStore'
-import Chart from 'primevue/chart'
-import Card from 'primevue/card'
-import Button from 'primevue/button'
+import { useVuelidate } from '@vuelidate/core'
+import { required, email, maxLength } from '@vuelidate/validators'
+
+// Components
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
+import Chips from 'primevue/chips'
+import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
-import Toast from 'primevue/toast'
-import CustomerForm from '@/components/CustomerForm.vue'
+import Tag from 'primevue/tag'
+import Tooltip from 'primevue/tooltip'
+
+// Props & Emits
+const props = defineProps({
+  customer: { type: Object, default: () => ({}) },
+  mode: { type: String, default: 'add' },
+  loading: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['save', 'cancel', 'save-and-add'])
 
 // Composables
 const { t } = useI18n()
-const toast = useToast()
-const customerStore = useCustomerStore()
 
 // Reactive Data
-const exportLoading = ref(false)
-const showCustomerDialog = ref(false)
-const selectedCustomer = ref(null)
-const formMode = ref('add')
+const activeTab = ref(0)
+const localCustomer = ref(initializeCustomer())
+const showUnsavedDialog = ref(false)
+const hasUnsavedChanges = ref(false)
 const saveLoading = ref(false)
-const customerChartPeriod = ref('monthly')
-const orderChartPeriod = ref('monthly')
+const saveAndAddLoading = ref(false)
+const pendingLoading = ref(false)
+
+// Form validation rules
+const rules = {
+  name: { required, maxLength: maxLength(100) },
+  email: { required, email },
+  status: { required },
+  country: { required }
+}
+
+const v$ = useVuelidate(rules, localCustomer)
 
 // Options
-const chartPeriods = [
-  { label: t('weekly'), value: 'weekly' },
-  { label: t('monthly'), value: 'monthly' },
-  { label: t('yearly'), value: 'yearly' }
+const statusOptions = [
+  { label: t('active'), value: 'Active' },
+  { label: t('inactive'), value: 'Inactive' },
+  { label: t('pending'), value: 'Pending' }
+]
+
+const countryOptions = [
+  { label: t('tunisia'), value: 'Tunisia' },
+  { label: t('france'), value: 'France' },
+  { label: t('usa'), value: 'USA' },
+  { label: t('uk'), value: 'UK' }
 ]
 
 // Computed Properties
-const totalCustomers = computed(() => customerStore.customers.length)
-const totalOrders = computed(() => 
-  customerStore.customers.reduce((sum, customer) => sum + customer.totalOrders, 0)
-)
-const totalRevenue = computed(() => totalOrders.value * 100) // Placeholder: $100 per order
-const newCustomersThisMonth = computed(() => 
-  customerStore.customers.filter(c => {
-    const date = new Date(c.lastOrderDate || Date.now())
-    return date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear()
-  }).length
-)
+const formMode = computed(() => props.mode)
 
-const customerChartData = computed(() => ({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  datasets: [{
-    label: t('customers'),
-    data: [50, 75, 100, 120, 150, totalCustomers.value],
-    borderColor: '#3b82f6',
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    fill: true
-  }]
-}))
-
-const orderChartData = computed(() => ({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  datasets: [{
-    label: t('orders'),
-    data: [200, 250, 300, 280, 350, totalOrders.value],
-    backgroundColor: '#3b82f6'
-  }]
-}))
-
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: true, position: 'top' }
-  }
-}))
-
-const recentActivities = computed(() => [
-  // Placeholder data
-  {
-    date: new Date().toISOString(),
-    customer: 'John Doe',
-    action: t('placedOrder'),
-    details: t('orderDetails', { id: '1234' })
-  },
-  {
-    date: new Date(Date.now() - 86400000).toISOString(),
-    customer: 'Jane Smith',
-    action: t('updatedProfile'),
-    details: t('changedEmail')
-  }
-])
-
-const dialogTitle = computed(() => 
-  formMode.value === 'add' ? t('addCustomer') : t('editCustomer')
-)
+const formProgress = computed(() => {
+  let progress = 0
+  const fields = [
+    localCustomer.value.name,
+    localCustomer.value.email,
+    localCustomer.value.status,
+    localCustomer.value.country
+  ]
+  
+  progress += fields.filter(field => field && field !== '').length * 20
+  
+  if (localCustomer.value.phone) progress += 10
+  if (localCustomer.value.address) progress += 10
+  if (localCustomer.value.tags && localCustomer.value.tags.length > 0) progress += 10
+  
+  return Math.min(progress, 100)
+})
 
 // Methods
-const formatNumber = (value) => 
-  new Intl.NumberFormat('fr-TN').format(value || 0)
-
-const formatCurrency = (value) => 
-  new Intl.NumberFormat('fr-TN', { style: 'currency', currency: 'TND' }).format(value || 0)
-
-const formatDate = (date) => 
-  date ? new Intl.DateTimeFormat('fr-TN', { dateStyle: 'medium' }).format(new Date(date)) : 'N/A'
-
-const exportReport = async () => {
-  exportLoading.value = true
-  try {
-    // Placeholder for report export
-    toast.add({
-      severity: 'success',
-      summary: t('success'),
-      detail: t('reportExported'),
-      life: 3000
-    })
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: t('error'),
-      detail: t('failedToExport'),
-      life: 5000
-    })
-  } finally {
-    exportLoading.value = false
+function initializeCustomer() {
+  return {
+    name: '',
+    email: '',
+    status: 'Active',
+    phone: '',
+    country: '',
+    address: '',
+    orders: 0,
+    totalSpent: 0,
+    tags: [],
+    recentOrders: [],
+    ...props.customer
   }
 }
 
-const openCustomerDialog = () => {
-  selectedCustomer.value = null
-  formMode.value = 'add'
-  showCustomerDialog.value = true
+function formatCurrency(value) {
+  return new Intl.NumberFormat('fr-TN', {
+    style: 'currency',
+    currency: 'TND'
+  }).format(value || 0)
 }
 
-const saveCustomer = async (customer) => {
+function getOrderStatusSeverity(status) {
+  const severityMap = {
+    'Completed': 'success',
+    'Pending': 'warning',
+    'Cancelled': 'danger'
+  }
+  return severityMap[status] || 'info'
+}
+
+function updateProgress() {
+  // Progress is handled by computed property
+}
+
+function previewCustomer() {
+  console.log('Preview customer:', localCustomer.value)
+}
+
+async function saveAsPending() {
+  pendingLoading.value = true
+  try {
+    localCustomer.value.status = 'Pending'
+    await validateAndSave()
+  } finally {
+    pendingLoading.value = false
+  }
+}
+
+async function validateAndSave() {
+  const isValid = await v$.value.$validate()
+  if (!isValid) {
+    const firstError = v$.value.$errors[0]
+    console.error('Validation error:', firstError.$message)
+    return
+  }
+
   saveLoading.value = true
   try {
-    if (formMode.value === 'add') {
-      await customerStore.addCustomer(customer)
-      toast.add({
-        severity: 'success',
-        summary: t('success'),
-        detail: t('customerAdded'),
-        life: 3000
-      })
-    } else {
-      await customerStore.updateCustomer(customer)
-      toast.add({
-        severity: 'success',
-        summary: t('success'),
-        detail: t('customerUpdated'),
-        life: 3000
-      })
-    }
-    closeCustomerDialog()
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: t('error'),
-      detail: t('failedToSave'),
-      life: 5000
-    })
+    await emit('save', localCustomer.value)
+    hasUnsavedChanges.value = false
   } finally {
     saveLoading.value = false
   }
 }
 
-const closeCustomerDialog = () => {
-  showCustomerDialog.value = false
-  selectedCustomer.value = null
-  formMode.value = 'add'
-}
-
-const onDialogHide = () => {
-  closeCustomerDialog()
-}
-
-const viewAllActivities = () => {
-  toast.add({
-    severity: 'info',
-    summary: t('comingSoon'),
-    detail: t('activityLogComingSoon'),
-    life: 3000
-  })
-}
-
-// Lifecycle
-onMounted(async () => {
+async function saveAndAddAnother() {
+  saveAndAddLoading.value = true
   try {
-    await customerStore.fetchCustomers()
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: t('error'),
-      detail: t('failedToLoadData'),
-      life: 5000
-    })
+    await validateAndSave()
+    emit('save-and-add')
+    resetForm()
+  } finally {
+    saveAndAddLoading.value = false
   }
+}
+
+function resetForm() {
+  localCustomer.value = initializeCustomer()
+  v$.value.$reset()
+  activeTab.value = 0
+}
+
+function handleCancel() {
+  if (hasUnsavedChanges.value) {
+    showUnsavedDialog.value = true
+  } else {
+    emit('cancel')
+  }
+}
+
+function discardChanges() {
+  showUnsavedDialog.value = false
+  emit('cancel')
+}
+
+async function saveBeforeLeave() {
+  showUnsavedDialog.value = false
+  await validateAndSave()
+  emit('cancel')
+}
+
+// Watch for changes
+watch(localCustomer, () => {
+  hasUnsavedChanges.value = true
+}, { deep: true })
+
+// Lifecycle Hooks
+onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+function handleBeforeUnload(e) {
+  if (hasUnsavedChanges.value) {
+    e.preventDefault()
+    e.returnValue = t('unsavedChangesWarning')
+    return t('unsavedChangesWarning')
+  }
+}
 </script>
 
 <style scoped>
-.dashboard-container {
-  padding: 1.5rem;
-  background: #f8fafc;
-  min-height: 100vh;
+.customer-form-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Header Styles */
-.page-header {
-  margin-bottom: 2rem;
+.form-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.title-section {
+.header-info {
   flex: 1;
 }
 
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
+.form-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
   color: #1f2937;
-  margin: 0 0 0.5rem 0;
 }
 
-.page-subtitle {
-  color: #6b7280;
-  font-size: 1rem;
+.form-subtitle {
   margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
 }
 
 .header-actions {
   display: flex;
   gap: 0.75rem;
-  align-items: center;
 }
 
-.action-btn {
-  min-width: 120px;
-}
-
-.primary-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  border: none;
-  font-weight: 600;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
-  transition: all 0.2s;
-}
-
-.primary-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 15px -3px rgba(59, 130, 246, 0.4);
-}
-
-/* Metrics Styles */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.metric-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.metric-content {
+.form-progress {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1.5rem;
 }
 
-.metric-icon {
-  font-size: 2rem;
-  color: #3b82f6;
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background-color: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-.metric-info {
-  display: flex;
-  flex-direction: column;
+.progress-fill {
+  height: 100%;
+  background-color: #3b82f6;
+  transition: width 0.3s ease;
 }
 
-.metric-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.metric-label {
+.progress-text {
   font-size: 0.875rem;
   color: #6b7280;
 }
 
-/* Charts Styles */
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.chart-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.chart-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-
-.chart-filter {
-  width: 150px;
-}
-
-.chart {
-  height: 300px;
+.form-content {
+  flex: 1;
+  overflow-y: auto;
   padding: 1.5rem;
 }
 
-/* Activity Styles */
-.activity-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-}
-
-.activity-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.activity-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-
-.view-all-btn {
-  font-size: 0.875rem;
-}
-
-.activity-table {
-  padding: 1.5rem;
-}
-
-:deep(.activity-table) {
-  .p-datatable-thead > tr > th {
-    background: #f9fafb;
-    color: #374151;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    border-bottom: 2px solid #e5e7eb;
-  }
-  
-  .p-datatable-tbody > tr {
-    transition: background-color 0.2s;
-    
-    &:hover {
-      background: #f3f4f6 !important;
-    }
-  }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 2rem;
-  color: #9ca3af;
-  margin-bottom: 1rem;
-}
-
-.empty-message {
-  color: #6b7280;
-  font-size: 1rem;
-}
-
-/* Dialog Styles */
-.customer-dialog {
-  &:deep(.p-dialog-header) {
+:deep(.customer-tabs) {
+  .p-tabview-nav {
     border-bottom: 1px solid #e5e7eb;
   }
   
-  &:deep(.p-dialog-content) {
-    padding: 0;
-    overflow-y: auto;
-    max-height: calc(100vh - 150px);
+  .p-tabview-panels {
+    padding: 1rem 0;
   }
 }
 
-/* Responsive Adjustments */
-@media (max-width: 992px) {
+.tab-panel {
+  padding: 0;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: #1f2937;
+}
+
+.section-description {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-field {
+  margin-bottom: 1.25rem;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.required:after {
+  content: " *";
+  color: #ef4444;
+}
+
+.optional-label {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+}
+
+.help-icon {
+  margin-left: 0.25rem;
+  color: #9ca3af;
+  cursor: help;
+}
+
+.field-input {
+  width: 100%;
+}
+
+.field-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+.char-counter {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+}
+
+.input-addon {
+  padding: 0.5rem 0.75rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+:deep(.orders-table) {
+  .p-datatable-tbody > tr > td {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+.empty-orders {
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
+  background-color: #f9fafb;
+}
+
+.empty-text {
+  margin: 0;
+  color: #6b7280;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #fff;
+}
+
+.actions-left, .actions-right {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.save-button {
+  min-width: 120px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
   .header-content {
     flex-direction: column;
+    align-items: flex-start;
     gap: 1rem;
   }
   
   .header-actions {
     width: 100%;
-    flex-wrap: wrap;
+    justify-content: flex-end;
   }
   
-  .action-btn, .primary-btn {
-    flex: 1;
-    min-width: auto;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 1rem;
-  }
-  
-  .metrics-grid {
+  .form-grid {
     grid-template-columns: 1fr;
   }
   
-  .charts-grid {
-    grid-template-columns: 1fr;
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 1rem;
+  }
+  
+  .actions-left, .actions-right {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>

@@ -591,7 +591,8 @@ const onPageChange = (event) => {
 }
 
 const openProductDialog = () => {
-  selectedProduct.value = null
+  // selectedProduct.value = null
+  selectedProduct.value = {}
   formMode.value = 'add'
   showProductDialog.value = true
 }
@@ -1017,6 +1018,15 @@ watch(filters, () => {
   padding-top: 1rem;
   border-top: 1px solid #e5e7eb;
 }
+
+/* align input fiel on the same line than other input */
+.filters-row .p-input-icon-left {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+
 
 .results-chip {
   background: #eff6ff;

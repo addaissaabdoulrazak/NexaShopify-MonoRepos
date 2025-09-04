@@ -88,7 +88,7 @@ namespace NexaShopify.Core.Identity.Handlers
             }
         }
 
-        #region>>> Shop rice 
+        #region>>> Adda Issa - GetHandler
 
         internal static List<Models.UserRoleModel> Get(List<Infrastructure.Data.Entities.Tables.UserRolesEntity> userRoleDb)
         {

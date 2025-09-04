@@ -456,63 +456,49 @@
                 />
               </div>
 
-              <!-- Variants Section -->
+              <!-- DEBUT: Gestion dynamique des attributs de variantes -->
               <div class="form-field full-width">
-                <div class="variants-header">
-                  <h4 class="variants-title">{{ $t('productVariants') }}</h4>
-                  <Button 
-                    :label="$t('addVariant')" 
-                    icon="pi pi-plus" 
-                    size="small"
-                    @click="addVariant"
-                  />
+                <div class="variant-attributes-section">
+                  <label for="variant-option-input" class="field-label">{{ $t('addVariantOption') }}</label>
+                  <div class="p-inputgroup">
+                    <InputText id="variant-option-input" v-model="newOption" @keyup.enter="addOption" :placeholder="$t('optionsHelp')" />
+                    <Button icon="pi pi-plus" class="p-button-secondary" @click="addOption" />
+                  </div>
+                  <div class="variant-options-list">
+                    <Chip v-for="(option, idx) in variantOptions" :key="option" :label="option" removable @remove="removeOption(idx)" class="variant-option-chip" />
+                  </div>
                 </div>
-                
-                <div v-if="localProduct.variants && localProduct.variants.length > 0" class="variants-table">
-                  <DataTable 
-                    :value="localProduct.variants" 
-                    editMode="cell" 
-                    class="editable-cells-table"
-                    responsiveLayout="scroll"
-                  >
-                    <Column field="option1" :header="$t('size')" style="width: 25%">
-                      <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" />
+
+                <div v-if="variants.length > 0" class="variant-table-section">
+                  <DataTable :value="variants" class="p-datatable-sm variants-table">
+                    <Column v-for="option in variantOptions" :key="option" :header="option">
+                      <template #body="{ data }">
+                        <InputText v-model="data[option]" class="w-full" />
                       </template>
                     </Column>
-                    <Column field="option2" :header="$t('color')" style="width: 25%">
-                      <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" />
+                    <Column :header="$t('price')">
+                      <template #body="{ data }">
+                        <InputNumber v-model="data.price" mode="currency" currency="TND" locale="fr-TN" class="w-full" />
                       </template>
                     </Column>
-                    <Column field="quantity" :header="$t('quantity')" style="width: 20%">
-                      <template #editor="{ data, field }">
-                        <InputNumber v-model="data[field]" :min="0" />
+                    <Column :header="$t('inventory')">
+                      <template #body="{ data }">
+                        <InputNumber v-model="data.stock" class="w-full" />
                       </template>
                     </Column>
-                    <Column field="price" :header="$t('price')" style="width: 20%">
-                      <template #editor="{ data, field }">
-                        <InputNumber v-model="data[field]" :min="0" :maxFractionDigits="3" />
-                      </template>
-                    </Column>
-                    <Column style="width: 10%">
+                    <Column>
                       <template #body="{ index }">
-                        <Button 
-                          icon="pi pi-trash" 
-                          severity="danger"
-                          text
-                          rounded
-                          @click="removeVariant(index)"
-                        />
+                        <Button icon="pi pi-trash" severity="danger" text rounded @click="removeVariant(index)" />
                       </template>
                     </Column>
                   </DataTable>
                 </div>
-                
                 <div v-else class="empty-variants">
                   <p class="empty-text">{{ $t('noVariantsYet') }}</p>
                 </div>
+                <Button :label="$t('addVariant')" icon="pi pi-plus" text @click="addVariant" class="mt-2" />
               </div>
+              <!-- FIN: Gestion dynamique des attributs de variantes -->
             </div>
           </div>
         </TabPanel>
@@ -711,6 +697,7 @@ import Dialog from 'primevue/dialog'
 import Badge from 'primevue/badge'
 import Tooltip from 'primevue/tooltip'
 import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
 // Props & Emits
 const props = defineProps({
@@ -1012,22 +999,37 @@ function getInventoryStatus(quantity) {
   return { label: t('inStock'), severity: 'success' }
 }
 
-// Variants Management
-function addVariant() {
-  if (!localProduct.value.variants) {
-    localProduct.value.variants = []
-  }
-  localProduct.value.variants.push({
-    option1: '',
-    option2: '',
-    quantity: 0,
-    price: localProduct.value.price || 0
-  })
-}
+// DEBUT: Gestion dynamique des attributs de variantes
+const variantOptions = ref(['Taille', 'Couleur'])
+const newOption = ref('')
+const variants = computed({
+  get: () => localProduct.value.variants || [],
+  set: (value) => { localProduct.value.variants = value }
+})
 
-function removeVariant(index) {
-  localProduct.value.variants.splice(index, 1)
+function addOption() {
+  if (newOption.value && !variantOptions.value.includes(newOption.value)) {
+    variantOptions.value.push(newOption.value)
+    variants.value.forEach(v => v[newOption.value] = '')
+    newOption.value = ''
+  }
 }
+function removeOption(idx) {
+  const opt = variantOptions.value[idx]
+  variantOptions.value.splice(idx, 1)
+  variants.value.forEach(v => delete v[opt])
+}
+function addVariant() {
+  const variant = {}
+  variantOptions.value.forEach(opt => variant[opt] = '')
+  variant.price = localProduct.value.price || 0
+  variant.stock = 0
+  variants.value.push(variant)
+}
+function removeVariant(idx) {
+  variants.value.splice(idx, 1)
+}
+// FIN: Gestion dynamique des attributs de variantes
 
 // SKU Generation
 function generateSku() {
