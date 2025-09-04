@@ -198,5 +198,12 @@
   "customerNotesAndTags": "Notes supplémentaires et étiquettes pour le client",
   "tags": "Étiquettes",
   "addTags": "Ajouter des étiquettes (séparées par des virgules)",
-  "tagsHelp": "Appuyez sur Entrée ou virgule pour ajouter des étiquettes"
+  "tagsHelp": "Appuyez sur Entrée ou virgule pour ajouter des étiquettes",
+  "optionName": "Nom de l'option",
+  "optionValuesPlaceholder": "ex: Rouge, Bleu, Vert",
+  "addAnotherOption": "Ajouter une autre option",
+  "variantsPreview": "Aperçu des variantes",
+  "optionNameLabel": "Nom de l'option",
+  "optionValuesLabel": "Valeurs de l'option",
+  "optionNamePlaceholder": "ex: Taille"
 }

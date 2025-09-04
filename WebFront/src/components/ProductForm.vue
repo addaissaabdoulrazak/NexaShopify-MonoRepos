@@ -456,49 +456,57 @@
                 />
               </div>
 
-              <!-- DEBUT: Gestion dynamique des attributs de variantes -->
+              <!-- DEBUT: Gestion des variantes style Shopify -->
               <div class="form-field full-width">
-                <div class="variant-attributes-section">
-                  <label for="variant-option-input" class="field-label">{{ $t('addVariantOption') }}</label>
-                  <div class="p-inputgroup">
-                    <InputText id="variant-option-input" v-model="newOption" @keyup.enter="addOption" :placeholder="$t('optionsHelp')" />
-                    <Button icon="pi pi-plus" class="p-button-secondary" @click="addOption" />
+                <div v-for="(option, optionIndex) in localProduct.options" :key="option.id" class="option-card">
+                  <div class="option-header">
+                     <h5 class="option-title">{{ $t('option') }} {{ optionIndex + 1 }}</h5>
+                    <Button icon="pi pi-times" severity="danger" text rounded @click="removeOption(optionIndex)" />
                   </div>
-                  <div class="variant-options-list">
-                    <Chip v-for="(option, idx) in variantOptions" :key="option" :label="option" removable @remove="removeOption(idx)" class="variant-option-chip" />
+                   <div class="option-body">
+                    <div class="form-field">
+                      <label :for="`option_name_${optionIndex}`" class="field-label">{{ $t('optionNameLabel') }}</label>
+                      <InputText :id="`option_name_${optionIndex}`" v-model="option.name" :placeholder="$t('optionNamePlaceholder')" class="option-name-input" @update:modelValue="generateVariants" />
+                    </div>
+                    <div class="form-field">
+                       <label :for="`option_values_${optionIndex}`" class="field-label">{{ $t('optionValuesLabel') }}</label>
+                      <Chips :id="`option_values_${optionIndex}`" v-model="option.values" :placeholder="$t('optionValuesPlaceholder')" separator="," @update:modelValue="generateVariants" />
+                      <small>{{ $t('tagsHelp') }}</small>
+                    </div>
                   </div>
                 </div>
 
-                <div v-if="variants.length > 0" class="variant-table-section">
-                  <DataTable :value="variants" class="p-datatable-sm variants-table">
-                    <Column v-for="option in variantOptions" :key="option" :header="option">
-                      <template #body="{ data }">
-                        <InputText v-model="data[option]" class="w-full" />
-                      </template>
-                    </Column>
-                    <Column :header="$t('price')">
-                      <template #body="{ data }">
-                        <InputNumber v-model="data.price" mode="currency" currency="TND" locale="fr-TN" class="w-full" />
-                      </template>
-                    </Column>
-                    <Column :header="$t('inventory')">
-                      <template #body="{ data }">
-                        <InputNumber v-model="data.stock" class="w-full" />
-                      </template>
-                    </Column>
-                    <Column>
-                      <template #body="{ index }">
-                        <Button icon="pi pi-trash" severity="danger" text rounded @click="removeVariant(index)" />
-                      </template>
-                    </Column>
-                  </DataTable>
-                </div>
-                <div v-else class="empty-variants">
-                  <p class="empty-text">{{ $t('noVariantsYet') }}</p>
-                </div>
-                <Button :label="$t('addVariant')" icon="pi pi-plus" text @click="addVariant" class="mt-2" />
+                <Button 
+                  v-if="localProduct.options.length < 3"
+                  :label="$t('addAnotherOption')" 
+                  icon="pi pi-plus" 
+                  @click="addOption" 
+                  class="p-button-text" 
+                />
               </div>
-              <!-- FIN: Gestion dynamique des attributs de variantes -->
+
+              <div v-if="localProduct.variants && localProduct.variants.length > 0" class="form-field full-width variants-table-container">
+                <h4 class="variants-preview-title">{{ $t('variantsPreview') }}</h4>
+                <DataTable :value="localProduct.variants" class="p-datatable-sm">
+                  <Column v-for="option in localProduct.options.filter(o => o.name)" :key="option.name" :header="option.name" :field="option.name" />
+                  <Column :header="$t('price')">
+                    <template #body="{ data }">
+                      <InputNumber v-model="data.price" mode="currency" currency="TND" locale="fr-TN" class="w-full" />
+                    </template>
+                  </Column>
+                  <Column :header="$t('inventory')">
+                    <template #body="{ data }">
+                      <InputNumber v-model="data.stock" class="w-full" />
+                    </template>
+                  </Column>
+                   <Column :header="$t('sku')">
+                    <template #body="{ data }">
+                      <InputText v-model="data.sku" class="w-full" />
+                    </template>
+                  </Column>
+                </DataTable>
+              </div>
+              <!-- FIN: Gestion des variantes style Shopify -->
             </div>
           </div>
         </TabPanel>
@@ -818,7 +826,7 @@ const marginClass = computed(() => {
 
 // Methods
 function initializeProduct() {
-  return {
+  const baseProduct = {
     title: '',
     description: '',
     status: 'draft',
@@ -834,14 +842,27 @@ function initializeProduct() {
     quantity: 0,
     continueSelling: false,
     sku: '',
+    options: [],
     variants: [],
     vendor: '',
     collections: [],
     tags: [],
     seoTitle: '',
     seoDescription: '',
-    ...props.product
+  };
+
+  // Deep merge props.product into baseProduct
+  const product = JSON.parse(JSON.stringify({ ...baseProduct, ...props.product }));
+  
+  // Ensure options and variants are arrays
+  if (!Array.isArray(product.options)) {
+    product.options = [];
   }
+  if (!Array.isArray(product.variants)) {
+    product.variants = [];
+  }
+
+  return product;
 }
 
 function calculateProfitMargin() {
@@ -999,37 +1020,52 @@ function getInventoryStatus(quantity) {
   return { label: t('inStock'), severity: 'success' }
 }
 
-// DEBUT: Gestion dynamique des attributs de variantes
-const variantOptions = ref(['Taille', 'Couleur'])
-const newOption = ref('')
-const variants = computed({
-  get: () => localProduct.value.variants || [],
-  set: (value) => { localProduct.value.variants = value }
-})
-
+// DEBUT: Gestion des variantes style Shopify
 function addOption() {
-  if (newOption.value && !variantOptions.value.includes(newOption.value)) {
-    variantOptions.value.push(newOption.value)
-    variants.value.forEach(v => v[newOption.value] = '')
-    newOption.value = ''
+  if (localProduct.value.options.length < 3) {
+    localProduct.value.options.push({ id: Date.now(), name: '', values: [] });
   }
 }
-function removeOption(idx) {
-  const opt = variantOptions.value[idx]
-  variantOptions.value.splice(idx, 1)
-  variants.value.forEach(v => delete v[opt])
+
+function removeOption(index) {
+  localProduct.value.options.splice(index, 1);
+  generateVariants();
 }
-function addVariant() {
-  const variant = {}
-  variantOptions.value.forEach(opt => variant[opt] = '')
-  variant.price = localProduct.value.price || 0
-  variant.stock = 0
-  variants.value.push(variant)
+
+function generateVariants() {
+  const options = localProduct.value.options.filter(opt => opt.name && opt.values.length > 0);
+  if (options.length === 0) {
+    localProduct.value.variants = [];
+    return;
+  }
+
+  const combinations = options.reduce((acc, option) => {
+    if (acc.length === 0) {
+      return option.values.map(value => ({ [option.name]: value }));
+    }
+    const newAcc = [];
+    acc.forEach(existingCombo => {
+      option.values.forEach(value => {
+        newAcc.push({ ...existingCombo, [option.name]: value });
+      });
+    });
+    return newAcc;
+  }, []);
+
+  localProduct.value.variants = combinations.map(combo => {
+    // Try to find an existing variant to preserve price/stock
+    const existing = localProduct.value.variants.find(v => 
+      Object.keys(combo).every(key => combo[key] === v[key])
+    );
+    return {
+      ...combo,
+      price: existing?.price || localProduct.value.price || 0,
+      stock: existing?.stock || 0,
+      sku: existing?.sku || ''
+    };
+  });
 }
-function removeVariant(idx) {
-  variants.value.splice(idx, 1)
-}
-// FIN: Gestion dynamique des attributs de variantes
+// FIN: Gestion des variantes style Shopify
 
 // SKU Generation
 function generateSku() {
@@ -1502,6 +1538,47 @@ function handleBeforeUnload(e) {
 .generate-btn {
   margin-top: 0.25rem;
 }
+
+.option-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f9fafb;
+}
+
+.option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.option-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.option-body {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.variants-table-container {
+  margin-top: 1.5rem;
+}
+
+.variants-preview-title {
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* FIN: Styles pour la gestion dynamique des variantes */
 
 .variants-header {
   display: flex;

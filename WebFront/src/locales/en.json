@@ -290,6 +290,7 @@
   "selectGroup": "Select group",
   "regular": "Regular",
   "vip": "VIP",
+  "productOrganization": "Product Organization",
   "wholesale": "Wholesale",
   "newsletterSubscribed": "Newsletter Subscribed",
   "newsletterDescription": "Customer has opted in to receive newsletters",
@@ -302,5 +303,12 @@
   "customerNotesAndTags": "Additional notes and tags for the customer",
   "tags": "Tags",
   "addTags": "Add tags (comma-separated)",
-  "tagsHelp": "Press Enter or comma to add tags"
+  "tagsHelp": "Press Enter or comma to add tags",
+  "optionName": "Option name",
+  "optionValuesPlaceholder": "e.g. Red, Blue, Green",
+  "addAnotherOption": "Add another option",
+  "variantsPreview": "Variants Preview",
+  "optionNameLabel": "Option Name",
+  "optionValuesLabel": "Option Values",
+  "optionNamePlaceholder": "e.g. Size"
 }
