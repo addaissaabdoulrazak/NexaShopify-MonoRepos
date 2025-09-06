@@ -128,30 +128,34 @@
               <!-- Publication Settings -->
               <div class="form-field full-width">
                 <label class="field-label">{{ $t('availability') }}</label>
-                <div class="checkbox-group">
-                  <div class="checkbox-item">
-                    <Checkbox
-                      v-model="localProduct.onlineStore"
-                      :binary="true"
-                      inputId="onlineStore"
-                      @change="updateProgress"
-                    />
-                    <label for="onlineStore" class="checkbox-label">
-                      <span class="label-text">{{ $t('onlineStore') }}</span>
-                      <small class="label-description">{{ $t('onlineStoreDescription') }}</small>
-                    </label>
+                <div class="availability-cards">
+                  <div class="checkbox-card">
+                    <div class="checkbox-item">
+                      <Checkbox
+                        v-model="localProduct.onlineStore"
+                        :binary="true"
+                        inputId="onlineStore"
+                        @change="updateProgress"
+                      />
+                      <label for="onlineStore" class="checkbox-label">
+                        <span class="label-text">{{ $t('onlineStore') }}</span>
+                        <small class="label-description">{{ $t('onlineStoreDescription') }}</small>
+                      </label>
+                    </div>
                   </div>
-                  <div class="checkbox-item">
-                    <Checkbox
-                      v-model="localProduct.pointOfSale"
-                      :binary="true"
-                      inputId="pointOfSale"
-                      @change="updateProgress"
-                    />
-                    <label for="pointOfSale" class="checkbox-label">
-                      <span class="label-text">{{ $t('pointOfSale') }}</span>
-                      <small class="label-description">{{ $t('pointOfSaleDescription') }}</small>
-                    </label>
+                  <div class="checkbox-card">
+                    <div class="checkbox-item">
+                      <Checkbox
+                        v-model="localProduct.pointOfSale"
+                        :binary="true"
+                        inputId="pointOfSale"
+                        @change="updateProgress"
+                      />
+                      <label for="pointOfSale" class="checkbox-label">
+                        <span class="label-text">{{ $t('pointOfSale') }}</span>
+                        <small class="label-description">{{ $t('pointOfSaleDescription') }}</small>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -272,7 +276,7 @@
 
         <!-- Pricing Tab -->
         <TabPanel :header="$t('pricing')" class="tab-panel">
-          <div class="tab-content">
+          <div v-if="!productHasOptions" class="tab-content">
             <div class="section-header">
               <h3 class="section-title">{{ $t('pricingInformation') }}</h3>
               <p class="section-description">{{ $t('setPricingDetails') }}</p>
@@ -374,139 +378,188 @@
               </div>
             </div>
           </div>
+          <div v-else class="tab-content">
+             <Message severity="info">{{ $t('variantPricingMessage') }}</Message>
+          </div>
         </TabPanel>
 
         <!-- Inventory Tab -->
         <TabPanel :header="$t('inventory')" class="tab-panel">
           <div class="tab-content">
-            <div class="section-header">
-              <h3 class="section-title">{{ $t('inventoryManagement') }}</h3>
-              <p class="section-description">{{ $t('trackInventoryLevels') }}</p>
+            <!-- Main Inventory Section -->
+            <div class="inventory-section">
+              <div class="section-header">
+                <h3 class="section-title">{{ $t('inventoryTracking') }}</h3>
+                <p class="section-description">{{ $t('manageBaseInventory') }}</p>
+              </div>
+              <div class="form-grid inventory-grid">
+                <!-- Track Quantity -->
+                <div class="form-field full-width">
+                  <div class="checkbox-item">
+                    <Checkbox
+                      v-model="localProduct.trackQuantity"
+                      :binary="true"
+                      inputId="trackQuantity"
+                      @change="updateProgress"
+                    />
+                    <label for="trackQuantity" class="checkbox-label">
+                      <span class="label-text">{{ $t('trackQuantity') }}</span>
+                      <small class="label-description">{{ $t('trackQuantityDescription') }}</small>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Quantity and Continue Selling -->
+                <!-- <div v-if="localProduct.trackQuantity" class="form-field">
+                  <label for="quantity" class="field-label">{{ $t('quantity') }}</label>
+                  <InputNumber
+                    id="quantity"
+                    v-model="localProduct.quantity"
+                    :placeholder="$t('enterQuantity')"
+                    :min="0"
+                    class="field-input"
+                  />
+                  <div class="inventory-status" v-if="localProduct.quantity !== null">
+                    <Badge 
+                      :value="getInventoryStatus(localProduct.quantity).label" 
+                      :severity="getInventoryStatus(localProduct.quantity).severity"
+                    />
+                  </div>
+                </div> -->
+
+                <div v-if="localProduct.trackQuantity" class="form-field continue-selling-field">
+                  <div class="checkbox-item">
+                    <Checkbox
+                      v-model="localProduct.continueSelling"
+                      :binary="true"
+                      inputId="continueSelling"
+                    />
+                    <label for="continueSelling" class="checkbox-label">
+                      <span class="label-text">{{ $t('continueSelling') }}</span>
+                      <small class="label-description">{{ $t('continueSellingDescription') }}</small>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Has SKU/Barcode Checkbox -->
+                <div class="form-field full-width">
+                  <div class="checkbox-item">
+                    <Checkbox
+                      v-model="hasSkuOrBarcode"
+                      :binary="true"
+                      inputId="hasSkuOrBarcode"
+                    />
+                    <label for="hasSkuOrBarcode" class="checkbox-label">
+                      <span class="label-text">{{ $t('hasSkuOrBarcode') }}</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- SKU and Barcode -->
+                <template v-if="hasSkuOrBarcode">
+                  <div class="form-field">
+                    <label for="sku" class="field-label">
+                      {{ $t('sku') }}
+                      <span class="optional-label">{{ $t('optional') }}</span>
+                    </label>
+                    <div class="input-with-button">
+                      <InputText 
+                        id="sku"
+                        v-model="localProduct.sku" 
+                        :placeholder="$t('enterSku')" 
+                        class="field-input"
+                      />
+                      <Button 
+                        icon="pi pi-refresh" 
+                        text 
+                        rounded
+                        @click="generateSku"
+                        v-tooltip.top="$t('generateSku')"
+                        class="generate-sku-btn"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="barcode" class="field-label">
+                      {{ $t('barcode') }}
+                      <span class="optional-label">{{ $t('optional') }}</span>
+                    </label>
+                    <InputText 
+                      id="barcode"
+                      v-model="localProduct.barcode" 
+                      :placeholder="$t('enterBarcode')" 
+                      class="field-input"
+                    />
+                  </div>
+                </template>
+              </div>
             </div>
 
-            <div class="form-grid">
-              <!-- Track Quantity -->
-              <div class="form-field full-width">
-                <div class="checkbox-item">
-                  <Checkbox
-                    v-model="localProduct.trackQuantity"
-                    :binary="true"
-                    inputId="trackQuantity"
-                    @change="updateProgress"
-                  />
-                  <label for="trackQuantity" class="checkbox-label">
-                    <span class="label-text">{{ $t('trackQuantity') }}</span>
-                    <small class="label-description">{{ $t('trackQuantityDescription') }}</small>
-                  </label>
-                </div>
-              </div>
+            <!-- Divider -->
+            <div class="section-divider">
+              <span class="divider-title">{{ $t('variants') }}</span>
+            </div>
 
-              <!-- Quantity -->
-              <div v-if="localProduct.trackQuantity" class="form-field">
-                <label for="quantity" class="field-label">{{ $t('quantity') }}</label>
-                <InputNumber
-                  id="quantity"
-                  v-model="localProduct.quantity"
-                  :placeholder="$t('enterQuantity')"
-                  :min="0"
-                  class="field-input"
-                />
-                <div class="inventory-status" v-if="localProduct.quantity !== null">
-                  <Badge 
-                    :value="getInventoryStatus(localProduct.quantity).label" 
-                    :severity="getInventoryStatus(localProduct.quantity).severity"
-                  />
-                </div>
+            <!-- Variants Section -->
+            <div class="variants-section">
+              <div class="section-header">
+                <h3 class="section-title">{{ $t('productVariants') }}</h3>
+                <p class="section-description">{{ $t('addOptionsDescription') }}</p>
               </div>
-
-              <!-- Continue Selling -->
-              <div v-if="localProduct.trackQuantity" class="form-field">
-                <div class="checkbox-item">
-                  <Checkbox
-                    v-model="localProduct.continueSelling"
-                    :binary="true"
-                    inputId="continueSelling"
-                  />
-                  <label for="continueSelling" class="checkbox-label">
-                    <span class="label-text">{{ $t('continueSelling') }}</span>
-                    <small class="label-description">{{ $t('continueSellingDescription') }}</small>
-                  </label>
-                </div>
-              </div>
-
-              <!-- SKU -->
-              <div class="form-field">
-                <label for="sku" class="field-label">
-                  {{ $t('sku') }}
-                  <span class="optional-label">{{ $t('optional') }}</span>
-                </label>
-                <InputText 
-                  id="sku"
-                  v-model="localProduct.sku" 
-                  :placeholder="$t('enterSku')" 
-                  class="field-input"
-                />
-                <Button 
-                  :label="$t('generateSku')" 
-                  icon="pi pi-refresh" 
-                  text 
-                  size="small"
-                  @click="generateSku"
-                  class="generate-btn"
-                />
-              </div>
-
-              <!-- DEBUT: Gestion des variantes style Shopify -->
-              <div class="form-field full-width">
-                <div v-for="(option, optionIndex) in localProduct.options" :key="option.id" class="option-card">
-                  <div class="option-header">
-                     <h5 class="option-title">{{ $t('option') }} {{ optionIndex + 1 }}</h5>
-                    <Button icon="pi pi-times" severity="danger" text rounded @click="removeOption(optionIndex)" />
-                  </div>
-                   <div class="option-body">
-                    <div class="form-field">
-                      <label :for="`option_name_${optionIndex}`" class="field-label">{{ $t('optionNameLabel') }}</label>
-                      <InputText :id="`option_name_${optionIndex}`" v-model="option.name" :placeholder="$t('optionNamePlaceholder')" class="option-name-input" @update:modelValue="generateVariants" />
+              <div class="form-grid">
+                <!-- Variant Options -->
+                <div class="form-field full-width">
+                  <div v-for="(option, optionIndex) in localProduct.options" :key="option.id" class="option-card">
+                    <div class="option-header">
+                      <h5 class="option-title">{{ $t('option') }} {{ optionIndex + 1 }}</h5>
+                      <Button icon="pi pi-times" severity="danger" text rounded @click="removeOption(optionIndex)" />
                     </div>
-                    <div class="form-field">
-                       <label :for="`option_values_${optionIndex}`" class="field-label">{{ $t('optionValuesLabel') }}</label>
-                      <Chips :id="`option_values_${optionIndex}`" v-model="option.values" :placeholder="$t('optionValuesPlaceholder')" separator="," @update:modelValue="generateVariants" />
-                      <small>{{ $t('tagsHelp') }}</small>
+                    <div class="option-body">
+                      <div class="form-field">
+                        <label :for="`option_name_${optionIndex}`" class="field-label">{{ $t('optionNameLabel') }}</label>
+                        <InputText :id="`option_name_${optionIndex}`" v-model="option.name" :placeholder="$t('optionNamePlaceholder')" class="option-name-input" @update:modelValue="generateVariants" />
+                      </div>
+                      <div class="form-field">
+                        <label :for="`option_values_${optionIndex}`" class="field-label">{{ $t('optionValuesLabel') }}</label>
+                        <Chips :id="`option_values_${optionIndex}`" v-model="option.values" :placeholder="$t('optionValuesPlaceholder')" separator="," @update:modelValue="generateVariants" />
+                        <small>{{ $t('tagsHelp') }}</small>
+                      </div>
                     </div>
                   </div>
+
+                  <Button 
+                    v-if="localProduct.options.length < 3"
+                    :label="$t('addAnotherOption')" 
+                    icon="pi pi-plus" 
+                    @click="addOption" 
+                    class="p-button-text" 
+                  />
                 </div>
 
-                <Button 
-                  v-if="localProduct.options.length < 3"
-                  :label="$t('addAnotherOption')" 
-                  icon="pi pi-plus" 
-                  @click="addOption" 
-                  class="p-button-text" 
-                />
+                <!-- Variants Preview Table -->
+                <div v-if="localProduct.variants && localProduct.variants.length > 0" class="form-field full-width variants-table-container">
+                  <h4 class="variants-preview-title">{{ $t('variantsPreview') }}</h4>
+                  <DataTable :value="localProduct.variants" class="p-datatable-sm">
+                    <Column v-for="option in localProduct.options.filter(o => o.name)" :key="option.name" :header="option.name" :field="option.name" />
+                    <Column :header="$t('price')">
+                      <template #body="{ data }">
+                        <InputNumber v-model="data.price" mode="currency" currency="TND" locale="fr-TN" class="w-full" />
+                      </template>
+                    </Column>
+                    <Column :header="$t('inventory')">
+                      <template #body="{ data }">
+                        <InputNumber v-model="data.stock" class="w-full" />
+                      </template>
+                    </Column>
+                    <Column :header="$t('sku')">
+                      <template #body="{ data }">
+                        <InputText v-model="data.sku" class="w-full" />
+                      </template>
+                    </Column>
+                  </DataTable>
+                </div>
               </div>
-
-              <div v-if="localProduct.variants && localProduct.variants.length > 0" class="form-field full-width variants-table-container">
-                <h4 class="variants-preview-title">{{ $t('variantsPreview') }}</h4>
-                <DataTable :value="localProduct.variants" class="p-datatable-sm">
-                  <Column v-for="option in localProduct.options.filter(o => o.name)" :key="option.name" :header="option.name" :field="option.name" />
-                  <Column :header="$t('price')">
-                    <template #body="{ data }">
-                      <InputNumber v-model="data.price" mode="currency" currency="TND" locale="fr-TN" class="w-full" />
-                    </template>
-                  </Column>
-                  <Column :header="$t('inventory')">
-                    <template #body="{ data }">
-                      <InputNumber v-model="data.stock" class="w-full" />
-                    </template>
-                  </Column>
-                   <Column :header="$t('sku')">
-                    <template #body="{ data }">
-                      <InputText v-model="data.sku" class="w-full" />
-                    </template>
-                  </Column>
-                </DataTable>
-              </div>
-              <!-- FIN: Gestion des variantes style Shopify -->
             </div>
           </div>
         </TabPanel>
@@ -706,6 +759,7 @@ import Badge from 'primevue/badge'
 import Tooltip from 'primevue/tooltip'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+import Message from 'primevue/message';
 
 // Props & Emits
 const props = defineProps({
@@ -730,6 +784,7 @@ const saveAndAddLoading = ref(false)
 const draftLoading = ref(false)
 const fileInput = ref(null)
 const filteredVendors = ref([])
+const hasSkuOrBarcode = ref(false)
 
 // Form validation rules
 const rules = {
@@ -824,7 +879,16 @@ const marginClass = computed(() => {
   return calculatedMargin.value >= 0 ? 'positive' : 'negative'
 })
 
+const productHasOptions = computed(() => {
+  return localProduct.value.options && localProduct.value.options.length > 0 && localProduct.value.options.some(o => o.name && o.values.length > 0);
+});
+
 // Methods
+function formatCurrency(value) {
+  if (value === null || value === undefined) return ''
+  return new Intl.NumberFormat('fr-TN', { style: 'currency', currency: 'TND' }).format(value)
+}
+
 function initializeProduct() {
   const baseProduct = {
     title: '',
@@ -860,6 +924,11 @@ function initializeProduct() {
   }
   if (!Array.isArray(product.variants)) {
     product.variants = [];
+  }
+
+  // Initialize hasSkuOrBarcode based on existing data
+  if (product.sku || product.barcode) {
+    hasSkuOrBarcode.value = true;
   }
 
   return product;
@@ -1330,6 +1399,23 @@ function handleBeforeUnload(e) {
   gap: 1rem;
 }
 
+.availability-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.checkbox-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: box-shadow 0.2s;
+}
+
+.checkbox-card:hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
 .checkbox-item {
   display: flex;
   align-items: flex-start;
@@ -1531,8 +1617,67 @@ function handleBeforeUnload(e) {
   }
 }
 
+.inventory-grid {
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+}
+
+.continue-selling-field {
+  padding-top: 2rem; /* Align with the input field label */
+}
+
+.input-with-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-button .field-input {
+  padding-right: 2.5rem; /* space for the button */
+}
+
+.generate-sku-btn {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2rem;
+  width: 2rem;
+}
+
 .inventory-status {
   margin-top: 0.5rem;
+}
+
+.inventory-section, .variants-section {
+  margin-bottom: 2rem;
+}
+
+.section-divider {
+  margin: 2rem 0;
+  text-align: center;
+  position: relative;
+}
+
+.section-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #e5e7eb;
+  z-index: 1;
+}
+
+.divider-title {
+  position: relative;
+  z-index: 2;
+  background-color: #fff;
+  padding: 0 1rem;
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .generate-btn {

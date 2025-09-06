@@ -11,6 +11,7 @@ import Analytics from '../views/Analytics.vue';
 import Marketing from '../views/Marketing.vue';
 import Discounts from '../views/Discounts.vue';
 import Settings from '../views/Settings.vue';
+import ChoosePlan from '../views/ChoosePlan.vue';
 
 const routes = [
   { 
@@ -77,6 +78,7 @@ const routes = [
   { path: '/marketing', name: 'Marketing', component: Marketing, meta: { layout: 'layoutseller' } },
   { path: '/discounts', name: 'Discounts', component: Discounts, meta: { layout: 'layoutseller' } },
   { path: '/settings', name: 'Settings', component: Settings, meta: { layout: 'layoutseller' } },
+  { path: '/choose-plan', name: 'ChoosePlan', component: ChoosePlan, meta: { title: 'Choisissez votre plan' } },
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../views/NotFound.vue') }
 ];
 
