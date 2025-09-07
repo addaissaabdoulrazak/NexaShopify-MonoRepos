@@ -5,22 +5,21 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace Infrastructure.Data.Access.Tables
 {
 
-    public class ProductOptionValueAccess
+    public class ProductTagsAccess
     {
         #region Default Methods
-        public static Infrastructure.Data.Entities.Tables.ProductOptionValueEntity Get(int valueid)
+        public static Infrastructure.Data.Entities.Tables.ProductTagsEntity Get(int id)
         {
             var dataTable = new DataTable();
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "SELECT * FROM [ProductOptionValue] WHERE [ValueId]=@Id";
+                string query = "SELECT * FROM [ProductTags] WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
-                sqlCommand.Parameters.AddWithValue("Id", valueid); 
+                sqlCommand.Parameters.AddWithValue("Id", id); 
 
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
 
@@ -28,7 +27,7 @@ namespace Infrastructure.Data.Access.Tables
 
             if (dataTable.Rows.Count > 0)
             {
-                return new Infrastructure.Data.Entities.Tables.ProductOptionValueEntity(dataTable.Rows[0]);
+                return new Infrastructure.Data.Entities.Tables.ProductTagsEntity(dataTable.Rows[0]);
             }
             else
             {
@@ -36,13 +35,13 @@ namespace Infrastructure.Data.Access.Tables
             }
         }
 
-        public static List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity> Get()
+        public static List<Infrastructure.Data.Entities.Tables.ProductTagsEntity> Get()
         {  
             var dataTable = new DataTable();     
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "SELECT * FROM [ProductOptionValue]";
+                string query = "SELECT * FROM [ProductTags]";
                 var sqlCommand = new SqlCommand(query, sqlConnection); 
 
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
@@ -50,26 +49,26 @@ namespace Infrastructure.Data.Access.Tables
 
             if (dataTable.Rows.Count > 0)
             {
-                return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductOptionValueEntity(x)).ToList();
+                return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductTagsEntity(x)).ToList();
             }
             else
             {
-                return new List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity>();
+                return new List<Infrastructure.Data.Entities.Tables.ProductTagsEntity>();
             }
         }
-        public static List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity> Get(List<int> ids)
+        public static List<Infrastructure.Data.Entities.Tables.ProductTagsEntity> Get(List<int> ids)
         {
             if(ids != null && ids.Count > 0)
             {
                 int maxQueryNumber = Settings.MAX_BATCH_SIZE ; 
-                List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity> results = null;
+                List<Infrastructure.Data.Entities.Tables.ProductTagsEntity> results = null;
                 if(ids.Count <= maxQueryNumber)
                 {
                     results = get(ids);
                 }else
                 {
                     int batchNumber = ids.Count / maxQueryNumber;
-                    results = new List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity>();
+                    results = new List<Infrastructure.Data.Entities.Tables.ProductTagsEntity>();
                     for(int i=0; i<batchNumber; i++)
                     {
                         results.AddRange(get(ids.GetRange(i * maxQueryNumber, maxQueryNumber)));
@@ -78,9 +77,9 @@ namespace Infrastructure.Data.Access.Tables
                 }
                 return results;
             }
-            return new List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity>();
+            return new List<Infrastructure.Data.Entities.Tables.ProductTagsEntity>();
         }
-        private static List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity> get(List<int> ids)
+        private static List<Infrastructure.Data.Entities.Tables.ProductTagsEntity> get(List<int> ids)
         {
             if(ids != null && ids.Count > 0)
             {
@@ -99,23 +98,23 @@ namespace Infrastructure.Data.Access.Tables
                     }
                     queryIds = queryIds.TrimEnd(',');
 
-                    sqlCommand.CommandText = $"SELECT * FROM [ProductOptionValue] WHERE [ValueId] IN ({queryIds})";                    
+                    sqlCommand.CommandText = $"SELECT * FROM [ProductTags] WHERE [Id] IN ({queryIds})";                    
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
                 }
 
                 if (dataTable.Rows.Count > 0)
                 {
-                    return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductOptionValueEntity(x)).ToList();
+                    return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductTagsEntity(x)).ToList();
                 }
                 else
                 {
-                    return new List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity>();
+                    return new List<Infrastructure.Data.Entities.Tables.ProductTagsEntity>();
                 }
             }
-            return new List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity>();
+            return new List<Infrastructure.Data.Entities.Tables.ProductTagsEntity>();
         }
 
-        public static int Insert(Infrastructure.Data.Entities.Tables.ProductOptionValueEntity item)
+        public static int Insert(Infrastructure.Data.Entities.Tables.ProductTagsEntity item)
         {
             int response = int.MinValue;
             using (var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
@@ -123,14 +122,14 @@ namespace Infrastructure.Data.Access.Tables
                 sqlConnection.Open();
                 var sqlTransaction = sqlConnection.BeginTransaction();
 
-                string query = "INSERT INTO [ProductOptionValue] ([OptionId],[Value])  VALUES (@OptionId,@Value); ";
+                string query = "INSERT INTO [ProductTags] ([ProductId],[TagName])  VALUES (@ProductId,@TagName); ";
                 query += "SELECT SCOPE_IDENTITY();";
 
                 using (var sqlCommand = new SqlCommand(query, sqlConnection, sqlTransaction))
 				{
 
-					sqlCommand.Parameters.AddWithValue("OptionId",item.OptionId);
-					sqlCommand.Parameters.AddWithValue("Value",item.Value);
+					sqlCommand.Parameters.AddWithValue("ProductId",item.ProductId);
+					sqlCommand.Parameters.AddWithValue("TagName",item.TagName);
 
                     var result = sqlCommand.ExecuteScalar();
                     response = result == null? int.MinValue:  int.TryParse(result.ToString(), out var insertedId) ? insertedId : int.MinValue;
@@ -140,7 +139,7 @@ namespace Infrastructure.Data.Access.Tables
                 return response;
             }
         }
-        public static int Insert(List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity> items)
+        public static int Insert(List<Infrastructure.Data.Entities.Tables.ProductTagsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
@@ -163,7 +162,7 @@ namespace Infrastructure.Data.Access.Tables
 
             return -1;
         }
-        private static int insert(List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity> items)
+        private static int insert(List<Infrastructure.Data.Entities.Tables.ProductTagsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
@@ -178,15 +177,15 @@ namespace Infrastructure.Data.Access.Tables
                     foreach (var item in items)
                     {
                         i++;
-                        query += " INSERT INTO [ProductOptionValue] ([OptionId],[Value]) VALUES ( "
+                        query += " INSERT INTO [ProductTags] ([ProductId],[TagName]) VALUES ( "
 
-							+ "@OptionId"+ i +","
-							+ "@Value"+ i 
+							+ "@ProductId"+ i +","
+							+ "@TagName"+ i 
                             + "); ";
 
                             
-							sqlCommand.Parameters.AddWithValue("OptionId" + i, item.OptionId);
-							sqlCommand.Parameters.AddWithValue("Value" + i, item.Value);
+							sqlCommand.Parameters.AddWithValue("ProductId" + i, item.ProductId);
+							sqlCommand.Parameters.AddWithValue("TagName" + i, item.TagName);
                     }
 
                     sqlCommand.CommandText = query;
@@ -200,25 +199,25 @@ namespace Infrastructure.Data.Access.Tables
             return -1;
         }
 
-        public static int Update(Infrastructure.Data.Entities.Tables.ProductOptionValueEntity item)
+        public static int Update(Infrastructure.Data.Entities.Tables.ProductTagsEntity item)
         {   
             int results = -1;
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "UPDATE [ProductOptionValue] SET [OptionId]=@OptionId, [Value]=@Value WHERE [ValueId]=@ValueId";
+                string query = "UPDATE [ProductTags] SET [ProductId]=@ProductId, [TagName]=@TagName WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
                     
-                sqlCommand.Parameters.AddWithValue("ValueId", item.ValueId);
-				sqlCommand.Parameters.AddWithValue("OptionId",item.OptionId);
-				sqlCommand.Parameters.AddWithValue("Value",item.Value);
+                sqlCommand.Parameters.AddWithValue("Id", item.Id);
+				sqlCommand.Parameters.AddWithValue("ProductId",item.ProductId);
+				sqlCommand.Parameters.AddWithValue("TagName",item.TagName);
                         
                 results = sqlCommand.ExecuteNonQuery();
             }
                 
             return results;
         }
-        public static int Update(List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity> items)
+        public static int Update(List<Infrastructure.Data.Entities.Tables.ProductTagsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
@@ -242,7 +241,7 @@ namespace Infrastructure.Data.Access.Tables
 
             return -1;
         }
-        private static int update(List<Infrastructure.Data.Entities.Tables.ProductOptionValueEntity> items)
+        private static int update(List<Infrastructure.Data.Entities.Tables.ProductTagsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
@@ -257,15 +256,15 @@ namespace Infrastructure.Data.Access.Tables
                     foreach (var item in items)
                     {
                         i++;
-                        query += " UPDATE [ProductOptionValue] SET "
+                        query += " UPDATE [ProductTags] SET "
 
-							+ "[OptionId]=@OptionId"+ i +","
-							+ "[Value]=@Value"+ i +" WHERE [ValueId]=@ValueId" + i 
+							+ "[ProductId]=@ProductId"+ i +","
+							+ "[TagName]=@TagName"+ i +" WHERE [Id]=@Id" + i 
                             + "; ";
 
-                            sqlCommand.Parameters.AddWithValue("ValueId" + i, item.ValueId);
-							sqlCommand.Parameters.AddWithValue("OptionId" + i, item.OptionId);
-							sqlCommand.Parameters.AddWithValue("Value" + i, item.Value);
+                            sqlCommand.Parameters.AddWithValue("Id" + i, item.Id);
+							sqlCommand.Parameters.AddWithValue("ProductId" + i, item.ProductId);
+							sqlCommand.Parameters.AddWithValue("TagName" + i, item.TagName);
                     }
 
                     sqlCommand.CommandText = query;
@@ -279,15 +278,15 @@ namespace Infrastructure.Data.Access.Tables
             return -1;
         }
 
-        public static int Delete(int valueid)
+        public static int Delete(int id)
         {
             int results = -1;
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "DELETE FROM [ProductOptionValue] WHERE [ValueId]=@ValueId";
+                string query = "DELETE FROM [ProductTags] WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
-                sqlCommand.Parameters.AddWithValue("ValueId", valueid);
+                sqlCommand.Parameters.AddWithValue("Id", id);
 
                 results = sqlCommand.ExecuteNonQuery();
             }
@@ -334,7 +333,7 @@ namespace Infrastructure.Data.Access.Tables
                     }
                     queryIds = queryIds.TrimEnd(',');
 
-                    string query = "DELETE FROM [ProductOptionValue] WHERE [ValueId] IN ("+ queryIds +")";                    
+                    string query = "DELETE FROM [ProductTags] WHERE [Id] IN ("+ queryIds +")";                    
                     sqlCommand.CommandText = query;
                         
                     results = sqlCommand.ExecuteNonQuery();

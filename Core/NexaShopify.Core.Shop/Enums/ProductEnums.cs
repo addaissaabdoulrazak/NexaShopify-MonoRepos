@@ -6,7 +6,20 @@ using System.Threading.Tasks;
 
 namespace NexaShopify.Core.Shop.Enums
 {
-    internal class ProductEnums
+    class ProductEnums
     {
+        public enum ProductStatus
+        {
+            Draft,    // Brouillon
+            Active,   // Actif
+            Archived  // Archivé
+        }
+
+        public enum ProductType
+        {
+            Physical, // Physique
+            Digital,  // Numérique
+            Service   // Service
+        }
     }
 }

@@ -5,22 +5,21 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace Infrastructure.Data.Access.Tables
 {
 
-    public class ProductVariantAccess
+    public class ProductVariantsAccess
     {
         #region Default Methods
-        public static Infrastructure.Data.Entities.Tables.ProductVariantEntity Get(long variantid)
+        public static Infrastructure.Data.Entities.Tables.ProductVariantsEntity Get(int id)
         {
             var dataTable = new DataTable();
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "SELECT * FROM [ProductVariant] WHERE [VariantId]=@Id";
+                string query = "SELECT * FROM [ProductVariants] WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
-                sqlCommand.Parameters.AddWithValue("Id", variantid); 
+                sqlCommand.Parameters.AddWithValue("Id", id); 
 
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
 
@@ -28,7 +27,7 @@ namespace Infrastructure.Data.Access.Tables
 
             if (dataTable.Rows.Count > 0)
             {
-                return new Infrastructure.Data.Entities.Tables.ProductVariantEntity(dataTable.Rows[0]);
+                return new Infrastructure.Data.Entities.Tables.ProductVariantsEntity(dataTable.Rows[0]);
             }
             else
             {
@@ -36,13 +35,13 @@ namespace Infrastructure.Data.Access.Tables
             }
         }
 
-        public static List<Infrastructure.Data.Entities.Tables.ProductVariantEntity> Get()
+        public static List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity> Get()
         {  
             var dataTable = new DataTable();     
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "SELECT * FROM [ProductVariant]";
+                string query = "SELECT * FROM [ProductVariants]";
                 var sqlCommand = new SqlCommand(query, sqlConnection); 
 
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
@@ -50,26 +49,26 @@ namespace Infrastructure.Data.Access.Tables
 
             if (dataTable.Rows.Count > 0)
             {
-                return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductVariantEntity(x)).ToList();
+                return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductVariantsEntity(x)).ToList();
             }
             else
             {
-                return new List<Infrastructure.Data.Entities.Tables.ProductVariantEntity>();
+                return new List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity>();
             }
         }
-        public static List<Infrastructure.Data.Entities.Tables.ProductVariantEntity> Get(List<long> ids)
+        public static List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity> Get(List<int> ids)
         {
             if(ids != null && ids.Count > 0)
             {
                 int maxQueryNumber = Settings.MAX_BATCH_SIZE ; 
-                List<Infrastructure.Data.Entities.Tables.ProductVariantEntity> results = null;
+                List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity> results = null;
                 if(ids.Count <= maxQueryNumber)
                 {
                     results = get(ids);
                 }else
                 {
                     int batchNumber = ids.Count / maxQueryNumber;
-                    results = new List<Infrastructure.Data.Entities.Tables.ProductVariantEntity>();
+                    results = new List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity>();
                     for(int i=0; i<batchNumber; i++)
                     {
                         results.AddRange(get(ids.GetRange(i * maxQueryNumber, maxQueryNumber)));
@@ -78,9 +77,9 @@ namespace Infrastructure.Data.Access.Tables
                 }
                 return results;
             }
-            return new List<Infrastructure.Data.Entities.Tables.ProductVariantEntity>();
+            return new List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity>();
         }
-        private static List<Infrastructure.Data.Entities.Tables.ProductVariantEntity> get(List<long> ids)
+        private static List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity> get(List<int> ids)
         {
             if(ids != null && ids.Count > 0)
             {
@@ -99,54 +98,59 @@ namespace Infrastructure.Data.Access.Tables
                     }
                     queryIds = queryIds.TrimEnd(',');
 
-                    sqlCommand.CommandText = $"SELECT * FROM [ProductVariant] WHERE [VariantId] IN ({queryIds})";                    
+                    sqlCommand.CommandText = $"SELECT * FROM [ProductVariants] WHERE [Id] IN ({queryIds})";                    
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
                 }
 
                 if (dataTable.Rows.Count > 0)
                 {
-                    return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductVariantEntity(x)).ToList();
+                    return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductVariantsEntity(x)).ToList();
                 }
                 else
                 {
-                    return new List<Infrastructure.Data.Entities.Tables.ProductVariantEntity>();
+                    return new List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity>();
                 }
             }
-            return new List<Infrastructure.Data.Entities.Tables.ProductVariantEntity>();
+            return new List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity>();
         }
 
-        public static long Insert(Infrastructure.Data.Entities.Tables.ProductVariantEntity item)
+        public static int Insert(Infrastructure.Data.Entities.Tables.ProductVariantsEntity item)
         {
-            long response = long.MinValue;
+            int response = int.MinValue;
             using (var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
                 var sqlTransaction = sqlConnection.BeginTransaction();
 
-                string query = "INSERT INTO [ProductVariant] ([PriceAdjustment],[ProductId],[SKU],[Stock])  VALUES (@PriceAdjustment,@ProductId,@SKU,@Stock); ";
+                string query = "INSERT INTO [ProductVariants] ([Available],[Barcode],[CompareAtPrice],[CostPerItem],[OptionsJson],[Price],[ProductId],[SKU],[Stock])  VALUES (@Available,@Barcode,@CompareAtPrice,@CostPerItem,@OptionsJson,@Price,@ProductId,@SKU,@Stock); ";
                 query += "SELECT SCOPE_IDENTITY();";
 
                 using (var sqlCommand = new SqlCommand(query, sqlConnection, sqlTransaction))
 				{
 
-					sqlCommand.Parameters.AddWithValue("PriceAdjustment",item.PriceAdjustment == null ? (object)DBNull.Value  : item.PriceAdjustment);
+					sqlCommand.Parameters.AddWithValue("Available",item.Available);
+					sqlCommand.Parameters.AddWithValue("Barcode",item.Barcode == null ? (object)DBNull.Value  : item.Barcode);
+					sqlCommand.Parameters.AddWithValue("CompareAtPrice",item.CompareAtPrice == null ? (object)DBNull.Value  : item.CompareAtPrice);
+					sqlCommand.Parameters.AddWithValue("CostPerItem",item.CostPerItem == null ? (object)DBNull.Value  : item.CostPerItem);
+					sqlCommand.Parameters.AddWithValue("OptionsJson",item.OptionsJson == null ? (object)DBNull.Value  : item.OptionsJson);
+					sqlCommand.Parameters.AddWithValue("Price",item.Price);
 					sqlCommand.Parameters.AddWithValue("ProductId",item.ProductId);
 					sqlCommand.Parameters.AddWithValue("SKU",item.SKU == null ? (object)DBNull.Value  : item.SKU);
 					sqlCommand.Parameters.AddWithValue("Stock",item.Stock);
 
                     var result = sqlCommand.ExecuteScalar();
-                    response = result == null? long.MinValue:  long.TryParse(result.ToString(), out var insertedId) ? insertedId : long.MinValue;
+                    response = result == null? int.MinValue:  int.TryParse(result.ToString(), out var insertedId) ? insertedId : int.MinValue;
                 }
                 sqlTransaction.Commit();
 
                 return response;
             }
         }
-        public static int Insert(List<Infrastructure.Data.Entities.Tables.ProductVariantEntity> items)
+        public static int Insert(List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
-                int maxParamsNumber = Settings.MAX_BATCH_SIZE / 5; // Nb params per query
+                int maxParamsNumber = Settings.MAX_BATCH_SIZE / 10; // Nb params per query
                 int results=0;
                 if(items.Count <= maxParamsNumber)
                 {
@@ -165,7 +169,7 @@ namespace Infrastructure.Data.Access.Tables
 
             return -1;
         }
-        private static int insert(List<Infrastructure.Data.Entities.Tables.ProductVariantEntity> items)
+        private static int insert(List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
@@ -180,16 +184,26 @@ namespace Infrastructure.Data.Access.Tables
                     foreach (var item in items)
                     {
                         i++;
-                        query += " INSERT INTO [ProductVariant] ([PriceAdjustment],[ProductId],[SKU],[Stock]) VALUES ( "
+                        query += " INSERT INTO [ProductVariants] ([Available],[Barcode],[CompareAtPrice],[CostPerItem],[OptionsJson],[Price],[ProductId],[SKU],[Stock]) VALUES ( "
 
-							+ "@PriceAdjustment"+ i +","
+							+ "@Available"+ i +","
+							+ "@Barcode"+ i +","
+							+ "@CompareAtPrice"+ i +","
+							+ "@CostPerItem"+ i +","
+							+ "@OptionsJson"+ i +","
+							+ "@Price"+ i +","
 							+ "@ProductId"+ i +","
 							+ "@SKU"+ i +","
 							+ "@Stock"+ i 
                             + "); ";
 
                             
-							sqlCommand.Parameters.AddWithValue("PriceAdjustment" + i, item.PriceAdjustment == null ? (object)DBNull.Value  : item.PriceAdjustment);
+							sqlCommand.Parameters.AddWithValue("Available" + i, item.Available);
+							sqlCommand.Parameters.AddWithValue("Barcode" + i, item.Barcode == null ? (object)DBNull.Value  : item.Barcode);
+							sqlCommand.Parameters.AddWithValue("CompareAtPrice" + i, item.CompareAtPrice == null ? (object)DBNull.Value  : item.CompareAtPrice);
+							sqlCommand.Parameters.AddWithValue("CostPerItem" + i, item.CostPerItem == null ? (object)DBNull.Value  : item.CostPerItem);
+							sqlCommand.Parameters.AddWithValue("OptionsJson" + i, item.OptionsJson == null ? (object)DBNull.Value  : item.OptionsJson);
+							sqlCommand.Parameters.AddWithValue("Price" + i, item.Price);
 							sqlCommand.Parameters.AddWithValue("ProductId" + i, item.ProductId);
 							sqlCommand.Parameters.AddWithValue("SKU" + i, item.SKU == null ? (object)DBNull.Value  : item.SKU);
 							sqlCommand.Parameters.AddWithValue("Stock" + i, item.Stock);
@@ -206,17 +220,22 @@ namespace Infrastructure.Data.Access.Tables
             return -1;
         }
 
-        public static int Update(Infrastructure.Data.Entities.Tables.ProductVariantEntity item)
+        public static int Update(Infrastructure.Data.Entities.Tables.ProductVariantsEntity item)
         {   
             int results = -1;
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "UPDATE [ProductVariant] SET [PriceAdjustment]=@PriceAdjustment, [ProductId]=@ProductId, [SKU]=@SKU, [Stock]=@Stock WHERE [VariantId]=@VariantId";
+                string query = "UPDATE [ProductVariants] SET [Available]=@Available, [Barcode]=@Barcode, [CompareAtPrice]=@CompareAtPrice, [CostPerItem]=@CostPerItem, [OptionsJson]=@OptionsJson, [Price]=@Price, [ProductId]=@ProductId, [SKU]=@SKU, [Stock]=@Stock WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
                     
-                sqlCommand.Parameters.AddWithValue("VariantId", item.VariantId);
-				sqlCommand.Parameters.AddWithValue("PriceAdjustment",item.PriceAdjustment == null ? (object)DBNull.Value  : item.PriceAdjustment);
+                sqlCommand.Parameters.AddWithValue("Id", item.Id);
+				sqlCommand.Parameters.AddWithValue("Available",item.Available);
+				sqlCommand.Parameters.AddWithValue("Barcode",item.Barcode == null ? (object)DBNull.Value  : item.Barcode);
+				sqlCommand.Parameters.AddWithValue("CompareAtPrice",item.CompareAtPrice == null ? (object)DBNull.Value  : item.CompareAtPrice);
+				sqlCommand.Parameters.AddWithValue("CostPerItem",item.CostPerItem == null ? (object)DBNull.Value  : item.CostPerItem);
+				sqlCommand.Parameters.AddWithValue("OptionsJson",item.OptionsJson == null ? (object)DBNull.Value  : item.OptionsJson);
+				sqlCommand.Parameters.AddWithValue("Price",item.Price);
 				sqlCommand.Parameters.AddWithValue("ProductId",item.ProductId);
 				sqlCommand.Parameters.AddWithValue("SKU",item.SKU == null ? (object)DBNull.Value  : item.SKU);
 				sqlCommand.Parameters.AddWithValue("Stock",item.Stock);
@@ -226,11 +245,11 @@ namespace Infrastructure.Data.Access.Tables
                 
             return results;
         }
-        public static int Update(List<Infrastructure.Data.Entities.Tables.ProductVariantEntity> items)
+        public static int Update(List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
-                int maxParamsNumber = Settings.MAX_BATCH_SIZE / 5; // Nb params per query
+                int maxParamsNumber = Settings.MAX_BATCH_SIZE / 10; // Nb params per query
                 int results = 0;
                 if(items.Count <= maxParamsNumber)
                 {
@@ -250,7 +269,7 @@ namespace Infrastructure.Data.Access.Tables
 
             return -1;
         }
-        private static int update(List<Infrastructure.Data.Entities.Tables.ProductVariantEntity> items)
+        private static int update(List<Infrastructure.Data.Entities.Tables.ProductVariantsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
@@ -265,16 +284,26 @@ namespace Infrastructure.Data.Access.Tables
                     foreach (var item in items)
                     {
                         i++;
-                        query += " UPDATE [ProductVariant] SET "
+                        query += " UPDATE [ProductVariants] SET "
 
-							+ "[PriceAdjustment]=@PriceAdjustment"+ i +","
+							+ "[Available]=@Available"+ i +","
+							+ "[Barcode]=@Barcode"+ i +","
+							+ "[CompareAtPrice]=@CompareAtPrice"+ i +","
+							+ "[CostPerItem]=@CostPerItem"+ i +","
+							+ "[OptionsJson]=@OptionsJson"+ i +","
+							+ "[Price]=@Price"+ i +","
 							+ "[ProductId]=@ProductId"+ i +","
 							+ "[SKU]=@SKU"+ i +","
-							+ "[Stock]=@Stock"+ i +" WHERE [VariantId]=@VariantId" + i 
+							+ "[Stock]=@Stock"+ i +" WHERE [Id]=@Id" + i 
                             + "; ";
 
-                            sqlCommand.Parameters.AddWithValue("VariantId" + i, item.VariantId);
-							sqlCommand.Parameters.AddWithValue("PriceAdjustment" + i, item.PriceAdjustment == null ? (object)DBNull.Value  : item.PriceAdjustment);
+                            sqlCommand.Parameters.AddWithValue("Id" + i, item.Id);
+							sqlCommand.Parameters.AddWithValue("Available" + i, item.Available);
+							sqlCommand.Parameters.AddWithValue("Barcode" + i, item.Barcode == null ? (object)DBNull.Value  : item.Barcode);
+							sqlCommand.Parameters.AddWithValue("CompareAtPrice" + i, item.CompareAtPrice == null ? (object)DBNull.Value  : item.CompareAtPrice);
+							sqlCommand.Parameters.AddWithValue("CostPerItem" + i, item.CostPerItem == null ? (object)DBNull.Value  : item.CostPerItem);
+							sqlCommand.Parameters.AddWithValue("OptionsJson" + i, item.OptionsJson == null ? (object)DBNull.Value  : item.OptionsJson);
+							sqlCommand.Parameters.AddWithValue("Price" + i, item.Price);
 							sqlCommand.Parameters.AddWithValue("ProductId" + i, item.ProductId);
 							sqlCommand.Parameters.AddWithValue("SKU" + i, item.SKU == null ? (object)DBNull.Value  : item.SKU);
 							sqlCommand.Parameters.AddWithValue("Stock" + i, item.Stock);
@@ -291,22 +320,22 @@ namespace Infrastructure.Data.Access.Tables
             return -1;
         }
 
-        public static int Delete(long variantid)
+        public static int Delete(int id)
         {
             int results = -1;
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "DELETE FROM [ProductVariant] WHERE [VariantId]=@VariantId";
+                string query = "DELETE FROM [ProductVariants] WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
-                sqlCommand.Parameters.AddWithValue("VariantId", variantid);
+                sqlCommand.Parameters.AddWithValue("Id", id);
 
                 results = sqlCommand.ExecuteNonQuery();
             }
 
             return results;
         }
-        public static int Delete(List<long> ids)
+        public static int Delete(List<int> ids)
         {
             if(ids != null && ids.Count > 0)
             {
@@ -327,7 +356,7 @@ namespace Infrastructure.Data.Access.Tables
             }
             return -1;
         }
-        private static int delete(List<long> ids)
+        private static int delete(List<int> ids)
         {
             if(ids != null && ids.Count > 0)
             {
@@ -346,7 +375,7 @@ namespace Infrastructure.Data.Access.Tables
                     }
                     queryIds = queryIds.TrimEnd(',');
 
-                    string query = "DELETE FROM [ProductVariant] WHERE [VariantId] IN ("+ queryIds +")";                    
+                    string query = "DELETE FROM [ProductVariants] WHERE [Id] IN ("+ queryIds +")";                    
                     sqlCommand.CommandText = query;
                         
                     results = sqlCommand.ExecuteNonQuery();

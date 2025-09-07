@@ -410,7 +410,8 @@
                 </div>
 
                 <!-- Quantity and Continue Selling -->
-                <!-- <div v-if="localProduct.trackQuantity" class="form-field">
+              <!-- cet input doit être un bloque conditionnel une fois une variantes de product ajouter il doit disparaitre-->
+                 <div v-if="localProduct.trackQuantity" class="form-field">
                   <label for="quantity" class="field-label">{{ $t('quantity') }}</label>
                   <InputNumber
                     id="quantity"
@@ -425,7 +426,9 @@
                       :severity="getInventoryStatus(localProduct.quantity).severity"
                     />
                   </div>
-                </div> -->
+                </div> 
+                    <!---->
+
 
                 <div v-if="localProduct.trackQuantity" class="form-field continue-selling-field">
                   <div class="checkbox-item">

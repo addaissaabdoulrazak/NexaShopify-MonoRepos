@@ -116,6 +116,7 @@ namespace NexaShopify.API
 
             builder.Services.AddSwaggerGen(c =>
             {
+                c.CustomSchemaIds(type => type.FullName);
                 #region
                 // c.SchemaFilter<ResponseModelSchemaFilter>();
                 //c.DocumentFilter<EnforceResponseModelDocumentFilter>();

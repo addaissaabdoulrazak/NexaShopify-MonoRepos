@@ -9,18 +9,18 @@ using System.Threading.Tasks;
 namespace Infrastructure.Data.Access.Tables
 {
 
-    public class ProductOptionAccess
+    public class ProductOptionsAccess
     {
         #region Default Methods
-        public static Infrastructure.Data.Entities.Tables.ProductOptionEntity Get(int optionid)
+        public static Infrastructure.Data.Entities.Tables.ProductOptionsEntity Get(int id)
         {
             var dataTable = new DataTable();
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "SELECT * FROM [ProductOption] WHERE [OptionId]=@Id";
+                string query = "SELECT * FROM [ProductOptions] WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
-                sqlCommand.Parameters.AddWithValue("Id", optionid); 
+                sqlCommand.Parameters.AddWithValue("Id", id); 
 
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
 
@@ -28,7 +28,7 @@ namespace Infrastructure.Data.Access.Tables
 
             if (dataTable.Rows.Count > 0)
             {
-                return new Infrastructure.Data.Entities.Tables.ProductOptionEntity(dataTable.Rows[0]);
+                return new Infrastructure.Data.Entities.Tables.ProductOptionsEntity(dataTable.Rows[0]);
             }
             else
             {
@@ -36,13 +36,13 @@ namespace Infrastructure.Data.Access.Tables
             }
         }
 
-        public static List<Infrastructure.Data.Entities.Tables.ProductOptionEntity> Get()
+        public static List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity> Get()
         {  
             var dataTable = new DataTable();     
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "SELECT * FROM [ProductOption]";
+                string query = "SELECT * FROM [ProductOptions]";
                 var sqlCommand = new SqlCommand(query, sqlConnection); 
 
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
@@ -50,26 +50,26 @@ namespace Infrastructure.Data.Access.Tables
 
             if (dataTable.Rows.Count > 0)
             {
-                return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductOptionEntity(x)).ToList();
+                return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductOptionsEntity(x)).ToList();
             }
             else
             {
-                return new List<Infrastructure.Data.Entities.Tables.ProductOptionEntity>();
+                return new List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity>();
             }
         }
-        public static List<Infrastructure.Data.Entities.Tables.ProductOptionEntity> Get(List<int> ids)
+        public static List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity> Get(List<int> ids)
         {
             if(ids != null && ids.Count > 0)
             {
                 int maxQueryNumber = Settings.MAX_BATCH_SIZE ; 
-                List<Infrastructure.Data.Entities.Tables.ProductOptionEntity> results = null;
+                List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity> results = null;
                 if(ids.Count <= maxQueryNumber)
                 {
                     results = get(ids);
                 }else
                 {
                     int batchNumber = ids.Count / maxQueryNumber;
-                    results = new List<Infrastructure.Data.Entities.Tables.ProductOptionEntity>();
+                    results = new List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity>();
                     for(int i=0; i<batchNumber; i++)
                     {
                         results.AddRange(get(ids.GetRange(i * maxQueryNumber, maxQueryNumber)));
@@ -78,9 +78,9 @@ namespace Infrastructure.Data.Access.Tables
                 }
                 return results;
             }
-            return new List<Infrastructure.Data.Entities.Tables.ProductOptionEntity>();
+            return new List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity>();
         }
-        private static List<Infrastructure.Data.Entities.Tables.ProductOptionEntity> get(List<int> ids)
+        private static List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity> get(List<int> ids)
         {
             if(ids != null && ids.Count > 0)
             {
@@ -99,23 +99,23 @@ namespace Infrastructure.Data.Access.Tables
                     }
                     queryIds = queryIds.TrimEnd(',');
 
-                    sqlCommand.CommandText = $"SELECT * FROM [ProductOption] WHERE [OptionId] IN ({queryIds})";                    
+                    sqlCommand.CommandText = $"SELECT * FROM [ProductOptions] WHERE [Id] IN ({queryIds})";                    
                 new SqlDataAdapter(sqlCommand).Fill(dataTable);
                 }
 
                 if (dataTable.Rows.Count > 0)
                 {
-                    return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductOptionEntity(x)).ToList();
+                    return dataTable.Rows.Cast<DataRow>().Select(x => new Infrastructure.Data.Entities.Tables.ProductOptionsEntity(x)).ToList();
                 }
                 else
                 {
-                    return new List<Infrastructure.Data.Entities.Tables.ProductOptionEntity>();
+                    return new List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity>();
                 }
             }
-            return new List<Infrastructure.Data.Entities.Tables.ProductOptionEntity>();
+            return new List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity>();
         }
 
-        public static int Insert(Infrastructure.Data.Entities.Tables.ProductOptionEntity item)
+        public static int Insert(Infrastructure.Data.Entities.Tables.ProductOptionsEntity item)
         {
             int response = int.MinValue;
             using (var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
@@ -123,13 +123,14 @@ namespace Infrastructure.Data.Access.Tables
                 sqlConnection.Open();
                 var sqlTransaction = sqlConnection.BeginTransaction();
 
-                string query = "INSERT INTO [ProductOption] ([OptionName],[ProductId])  VALUES (@OptionName,@ProductId); ";
+                string query = "INSERT INTO [ProductOptions] ([Name],[Position],[ProductId])  VALUES (@Name,@Position,@ProductId); ";
                 query += "SELECT SCOPE_IDENTITY();";
 
                 using (var sqlCommand = new SqlCommand(query, sqlConnection, sqlTransaction))
 				{
 
-					sqlCommand.Parameters.AddWithValue("OptionName",item.OptionName);
+					sqlCommand.Parameters.AddWithValue("Name",item.Name);
+					sqlCommand.Parameters.AddWithValue("Position",item.Position);
 					sqlCommand.Parameters.AddWithValue("ProductId",item.ProductId);
 
                     var result = sqlCommand.ExecuteScalar();
@@ -140,11 +141,11 @@ namespace Infrastructure.Data.Access.Tables
                 return response;
             }
         }
-        public static int Insert(List<Infrastructure.Data.Entities.Tables.ProductOptionEntity> items)
+        public static int Insert(List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
-                int maxParamsNumber = Settings.MAX_BATCH_SIZE / 3; // Nb params per query
+                int maxParamsNumber = Settings.MAX_BATCH_SIZE / 4; // Nb params per query
                 int results=0;
                 if(items.Count <= maxParamsNumber)
                 {
@@ -163,7 +164,7 @@ namespace Infrastructure.Data.Access.Tables
 
             return -1;
         }
-        private static int insert(List<Infrastructure.Data.Entities.Tables.ProductOptionEntity> items)
+        private static int insert(List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
@@ -178,14 +179,16 @@ namespace Infrastructure.Data.Access.Tables
                     foreach (var item in items)
                     {
                         i++;
-                        query += " INSERT INTO [ProductOption] ([OptionName],[ProductId]) VALUES ( "
+                        query += " INSERT INTO [ProductOptions] ([Name],[Position],[ProductId]) VALUES ( "
 
-							+ "@OptionName"+ i +","
+							+ "@Name"+ i +","
+							+ "@Position"+ i +","
 							+ "@ProductId"+ i 
                             + "); ";
 
                             
-							sqlCommand.Parameters.AddWithValue("OptionName" + i, item.OptionName);
+							sqlCommand.Parameters.AddWithValue("Name" + i, item.Name);
+							sqlCommand.Parameters.AddWithValue("Position" + i, item.Position);
 							sqlCommand.Parameters.AddWithValue("ProductId" + i, item.ProductId);
                     }
 
@@ -200,17 +203,18 @@ namespace Infrastructure.Data.Access.Tables
             return -1;
         }
 
-        public static int Update(Infrastructure.Data.Entities.Tables.ProductOptionEntity item)
+        public static int Update(Infrastructure.Data.Entities.Tables.ProductOptionsEntity item)
         {   
             int results = -1;
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "UPDATE [ProductOption] SET [OptionName]=@OptionName, [ProductId]=@ProductId WHERE [OptionId]=@OptionId";
+                string query = "UPDATE [ProductOptions] SET [Name]=@Name, [Position]=@Position, [ProductId]=@ProductId WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
                     
-                sqlCommand.Parameters.AddWithValue("OptionId", item.OptionId);
-				sqlCommand.Parameters.AddWithValue("OptionName",item.OptionName);
+                sqlCommand.Parameters.AddWithValue("Id", item.Id);
+				sqlCommand.Parameters.AddWithValue("Name",item.Name);
+				sqlCommand.Parameters.AddWithValue("Position",item.Position);
 				sqlCommand.Parameters.AddWithValue("ProductId",item.ProductId);
                         
                 results = sqlCommand.ExecuteNonQuery();
@@ -218,11 +222,11 @@ namespace Infrastructure.Data.Access.Tables
                 
             return results;
         }
-        public static int Update(List<Infrastructure.Data.Entities.Tables.ProductOptionEntity> items)
+        public static int Update(List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
-                int maxParamsNumber = Settings.MAX_BATCH_SIZE / 3; // Nb params per query
+                int maxParamsNumber = Settings.MAX_BATCH_SIZE / 4; // Nb params per query
                 int results = 0;
                 if(items.Count <= maxParamsNumber)
                 {
@@ -242,7 +246,7 @@ namespace Infrastructure.Data.Access.Tables
 
             return -1;
         }
-        private static int update(List<Infrastructure.Data.Entities.Tables.ProductOptionEntity> items)
+        private static int update(List<Infrastructure.Data.Entities.Tables.ProductOptionsEntity> items)
         {
             if (items != null && items.Count > 0)
             {
@@ -257,14 +261,16 @@ namespace Infrastructure.Data.Access.Tables
                     foreach (var item in items)
                     {
                         i++;
-                        query += " UPDATE [ProductOption] SET "
+                        query += " UPDATE [ProductOptions] SET "
 
-							+ "[OptionName]=@OptionName"+ i +","
-							+ "[ProductId]=@ProductId"+ i +" WHERE [OptionId]=@OptionId" + i 
+							+ "[Name]=@Name"+ i +","
+							+ "[Position]=@Position"+ i +","
+							+ "[ProductId]=@ProductId"+ i +" WHERE [Id]=@Id" + i 
                             + "; ";
 
-                            sqlCommand.Parameters.AddWithValue("OptionId" + i, item.OptionId);
-							sqlCommand.Parameters.AddWithValue("OptionName" + i, item.OptionName);
+                            sqlCommand.Parameters.AddWithValue("Id" + i, item.Id);
+							sqlCommand.Parameters.AddWithValue("Name" + i, item.Name);
+							sqlCommand.Parameters.AddWithValue("Position" + i, item.Position);
 							sqlCommand.Parameters.AddWithValue("ProductId" + i, item.ProductId);
                     }
 
@@ -279,15 +285,15 @@ namespace Infrastructure.Data.Access.Tables
             return -1;
         }
 
-        public static int Delete(int optionid)
+        public static int Delete(int id)
         {
             int results = -1;
             using(var sqlConnection = new SqlConnection(Settings.GetConnectionString()))
             {
                 sqlConnection.Open();
-                string query = "DELETE FROM [ProductOption] WHERE [OptionId]=@OptionId";
+                string query = "DELETE FROM [ProductOptions] WHERE [Id]=@Id";
                 var sqlCommand = new SqlCommand(query, sqlConnection);
-                sqlCommand.Parameters.AddWithValue("OptionId", optionid);
+                sqlCommand.Parameters.AddWithValue("Id", id);
 
                 results = sqlCommand.ExecuteNonQuery();
             }
@@ -334,7 +340,7 @@ namespace Infrastructure.Data.Access.Tables
                     }
                     queryIds = queryIds.TrimEnd(',');
 
-                    string query = "DELETE FROM [ProductOption] WHERE [OptionId] IN ("+ queryIds +")";                    
+                    string query = "DELETE FROM [ProductOptions] WHERE [Id] IN ("+ queryIds +")";                    
                     sqlCommand.CommandText = query;
                         
                     results = sqlCommand.ExecuteNonQuery();
