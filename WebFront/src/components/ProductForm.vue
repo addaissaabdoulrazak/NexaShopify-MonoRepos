@@ -960,6 +960,7 @@ async function saveAsDraft() {
   }
 }
 
+// rnouvelle methode remplaçant celle en dessous 
 async function validateAndSave() {
   const isValid = await v$.value.$validate()
   if (!isValid) {
@@ -971,12 +972,52 @@ async function validateAndSave() {
 
   saveLoading.value = true
   try {
-    await emit('save', localProduct.value)
+    // **MODIFICATION ICI** - Préparer les données pour le store
+    const productDataForStore = {
+      ...localProduct.value,
+      // Assurer la compatibilité des noms de champs
+      title: localProduct.value.title,
+      name: localProduct.value.title, // Pour compatibilité
+      category: localProduct.value.vendor || 'General', // Mapping temporaire
+      
+      // Traitement des options et variantes
+      options: localProduct.value.options.filter(opt => opt.name && opt.values.length > 0),
+      variants: localProduct.value.variants.map(variant => ({
+        ...variant,
+        options: Object.fromEntries(
+          Object.entries(variant).filter(([key, value]) => 
+            key !== 'id' && key !== 'sku' && key !== 'price' && key !== 'stock' && 
+            typeof value === 'string' && value.trim() !== ''
+          )
+        )
+      }))
+    }
+
+    await emit('save', productDataForStore)
     hasUnsavedChanges.value = false
   } finally {
     saveLoading.value = false
   }
 }
+
+
+// async function validateAndSave() {
+//   const isValid = await v$.value.$validate()
+//   if (!isValid) {
+//     // Afficher les erreurs et aller au premier onglet avec erreur
+//     const firstError = v$.value.$errors[0]
+//     console.error('Validation error:', firstError.$message)
+//     return
+//   }
+
+//   saveLoading.value = true
+//   try {
+//     await emit('save', localProduct.value)
+//     hasUnsavedChanges.value = false
+//   } finally {
+//     saveLoading.value = false
+//   }
+// }
 
 async function saveAndAddAnother() {
   saveAndAddLoading.value = true
@@ -1624,6 +1665,8 @@ function handleBeforeUnload(e) {
   grid-template-columns: 1fr 1fr;
   align-items: end;
 }
+
+.inventory-grid { grid-template-columns: 1fr 1fr; align-items: start; }
 
 .continue-selling-field {
   padding-top: 2rem; /* Align with the input field label */

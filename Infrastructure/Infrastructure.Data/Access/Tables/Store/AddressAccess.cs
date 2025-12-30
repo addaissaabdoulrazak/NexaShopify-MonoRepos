@@ -124,7 +124,7 @@ namespace Infrastructure.Data.Access.Tables
                 var sqlTransaction = sqlConnection.BeginTransaction();
 
                 string query = "INSERT INTO [Address] ([AddressLine1],[AddressLine2],[City],[Country],[CustomerId],[PhoneNumber],[PostalCode],[RecipientName],[StateProvince])  VALUES (@AddressLine1,@AddressLine2,@City,@Country,@CustomerId,@PhoneNumber,@PostalCode,@RecipientName,@StateProvince); ";
-                query += "SELECT SCOPE_IDENTITY();";
+                query += "SELECT SCOPE_IDENTITY();"; //recupérer l'ID inséré, d'ailleurs l'une des raisons pour lesquelles notre fonction renvoie un long
 
                 using (var sqlCommand = new SqlCommand(query, sqlConnection, sqlTransaction))
 				{

@@ -48,12 +48,37 @@ export const useOrderStore = defineStore('orders', {
         throw new Error('Failed to fetch orders');
       }
     },
-    addOrder(order) {
-      this.newOrder.id = Date.now();
-      this.newOrder.orderNumber = this.generateOrderNumber();
-      this.orders.push({ ...this.newOrder, ...order });
-      this.resetNewOrder();
+
+    // addOrder(order) {
+    //   this.newOrder.id = Date.now();
+    //   this.newOrder.orderNumber = this.generateOrderNumber();
+    //   this.orders.push({ ...this.newOrder, ...order });
+    //   this.resetNewOrder();
+    // },
+
+//
+
+ addOrder(orderFromForm) {
+  
+      // 1. Créez une copie de l'objet venant du formulaire pour éviter les mutations inattendues.
+      const newOrder = { ...orderFromForm };
+
+      // 2. Assignez directement les valeurs que le store est censé générer.
+      newOrder.id = Date.now(); // Génère un nouvel ID.
+      newOrder.orderNumber = this.generateOrderNumber(); // Génère et assigne le numéro de commande.
+
+      // 3. Assurez-vous que le statut par défaut est bien "Pending" si rien n'est fourni.
+      if (!newOrder.status) {
+        newOrder.status = 'Pending';
+      }
+      
+      // 4. Ajoutez le nouvel objet complet au tableau des commandes.
+      this.orders.push(newOrder);
+
+      // La méthode resetNewOrder() n'est plus nécessaire ici car nous n'utilisons plus this.newOrder.
     },
+//
+
     updateOrder(updatedOrder) {
       const index = this.orders.findIndex(o => o.id === updatedOrder.id);
       if (index !== -1) this.orders.splice(index, 1, updatedOrder);

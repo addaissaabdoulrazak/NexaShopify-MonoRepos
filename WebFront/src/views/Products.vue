@@ -374,13 +374,23 @@
       class="product-dialog"
       @hide="onDialogHide"
     >
-      <ProductForm 
+      <!-- <ProductForm 
+        v-if="showProductDialog" 
         :product="selectedProduct" 
         :mode="formMode"
         :loading="saveLoading"
         @save="saveProduct" 
         @cancel="closeProductDialog"
-      />
+      /> -->
+
+      <ProductForm 
+      v-if="showProductDialog" 
+      :product="selectedProduct" 
+      :mode="formMode"
+      :loading="saveLoading"
+      @save="saveProduct" 
+      @cancel="closeProductDialog"
+      /> 
     </Dialog>
 
     <!-- Delete Confirmation Dialog -->
@@ -597,6 +607,7 @@ const openProductDialog = () => {
   showProductDialog.value = true
 }
 
+
 const editProduct = (product) => {
   selectedProduct.value = { ...product }
   formMode.value = 'edit'
@@ -693,6 +704,7 @@ const onRowEditComplete = async (event) => {
 
 const saveProduct = async (product) => {
   saveLoading.value = true
+  // alert("adda")
   try {
     if (formMode.value === 'add') {
       await productStore.addProduct(product)
@@ -723,6 +735,47 @@ const saveProduct = async (product) => {
     saveLoading.value = false
   }
 }
+
+//
+// const saveProduct = async (product) => {
+//   saveLoading.value = true
+//   try {
+//     if (formMode.value === 'add') {
+//       // **MODIFICATION ICI** - Utiliser la nouvelle méthode du store
+//       const newProduct = await productStore.addProduct(product)
+//       toast.add({
+//         severity: 'success',
+//         summary: t('success'),
+//         detail: t('productAdded'),
+//         life: 3000
+//       })
+//       console.log('🎉 Nouveau produit ajouté:', newProduct)
+//     } else {
+//       // **MODIFICATION ICI** - Utiliser la méthode de mise à jour
+//       const updatedProduct = await productStore.updateProduct(product)
+//       toast.add({
+//         severity: 'success',
+//         summary: t('success'),
+//         detail: t('productUpdated'),
+//         life: 3000
+//       })
+//       console.log('🎉 Produit mis à jour:', updatedProduct)
+//     }
+//     closeProductDialog()
+//   } catch (error) {
+//     console.error('❌ Erreur lors de la sauvegarde:', error)
+//     toast.add({
+//       severity: 'error',
+//       summary: t('error'),
+//       detail: t('failedToSave'),
+//       life: 5000
+//     })
+//   } finally {
+//     saveLoading.value = false
+//   }
+// }
+
+// nouvelle methode 
 
 const closeProductDialog = () => {
   showProductDialog.value = false

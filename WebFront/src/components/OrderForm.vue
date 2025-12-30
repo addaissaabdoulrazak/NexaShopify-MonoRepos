@@ -182,7 +182,7 @@
                 <DataTable 
                   :value="localOrder.items" 
                   editMode="cell" 
-                  class="items-table"
+                  @cell-edit-complete="onCellEditComplete" class="items-table"
                   responsiveLayout="scroll"
                   v-if="localOrder.items && localOrder.items.length > 0"
                 >
@@ -419,7 +419,7 @@ const filteredCountries = ref([])
 
 // Form validation rules
 const rules = {
-  orderNumber: { required, maxLength: maxLength(50) },
+  orderNumber: { maxLength: maxLength(50) },
   customer: { required },
   status: { required },
   total: { required }
@@ -527,6 +527,16 @@ async function saveAndAddAnother() {
     resetForm()
   } finally {
     saveAndAddLoading.value = false
+  }
+}
+
+function onCellEditComplete(event) {
+  let { data, field, newValue, originalEvent: e } = event;
+
+  // Si la nouvelle valeur est valide (non vide pour le nom par exemple)
+  // et différente de l'ancienne, on met à jour.
+  if (newValue !== null && newValue !== undefined && data[field] !== newValue) {
+    data[field] = newValue;
   }
 }
 

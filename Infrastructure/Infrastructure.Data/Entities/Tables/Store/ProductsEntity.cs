@@ -22,6 +22,9 @@ namespace Infrastructure.Data.Entities.Tables
 		public int Quantity { get; set; }
 		public string SeoDescription { get; set; }
 		public string SeoTitle { get; set; }
+		
+		// Ce SKU n'est utilisé QUE si le produit n'a pas de variantes.
+		// Il est nullable pour permettre de le laisser vide quand des variantes existent.
 		public string SKU { get; set; }
 		public string Slug { get; set; }
 		public string Status { get; set; }
