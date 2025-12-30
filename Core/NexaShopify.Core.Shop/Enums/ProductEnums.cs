@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,6 @@ namespace NexaShopify.Core.Shop.Enums
             [Description("Archived")]  
             Archived = 3 // Archivé
         }
-
         public enum ProductType
         {
             Physical, // Physique

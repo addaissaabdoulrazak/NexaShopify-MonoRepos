@@ -42,8 +42,8 @@ namespace Infrastructure.Data.Entities.Tables
 /// <summary>
 /// Ancienne version de ProductVariantsEntity avec des commentaires détaillés
 /// </summary>
-namespace Infrastructure.Data.Entities.Tables
-{	
+
+
  public class ProductVariantsEntity
     {
 		/* public bool Available { get; set; }
@@ -92,6 +92,6 @@ namespace Infrastructure.Data.Entities.Tables
 
 
 	}
-}
+
 #endregion
 
